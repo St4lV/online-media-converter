@@ -1,0 +1,64 @@
+*{
+    margin: 0px;
+    padding: 0px;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #302e2e;
+    color: white;
+}
+
+header, header * {
+    align-items: center;
+    background-color: #000000;
+    
+}
+
+.flex{
+    display: flex;
+}
+
+.w100{
+    width: 100%;
+}
+
+#header-icon{
+    width: 32px;
+    height: 32px;
+}
+
+#action-bar{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin : 20px 0px;
+    width: 100%;
+}
+
+#url-input{
+    width: 90%;
+    font-size: 1em;
+    text-align: center;
+}
+
+#select-and-go-buttons{
+    align-items: center;
+    justify-content: center;
+    gap:20px;
+}
+
+#select-process{
+    font-size: 1.1em;
+}
+
+#start-process{
+    border-radius: 5px;
+    font-size: 1.1em;
+    padding: 8px;
+}
+
+.margin-bottom20{
+    margin-bottom: 20px;
+}

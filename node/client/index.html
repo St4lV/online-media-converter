@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <header class="flex">
+        <div class="flex">
+            <svg id="header-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-in-down" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M3.5 6a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-8a.5.5 0 0 0-.5-.5h-2a.5.5 0 0 1 0-1h2A1.5 1.5 0 0 1 14 6.5v8a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 14.5v-8A1.5 1.5 0 0 1 3.5 5h2a.5.5 0 0 1 0 1z"/>
+                <path fill-rule="evenodd" d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
+            </svg>
+            <h1>Online Media Converter</h1>
+        </div>
+    </header>
+    <hr>
+    <main>
+        <section id="action-bar" class="margin-bottom20">
+            <input type="text" class="margin-bottom20" placeholder="URL" id="url-input">
+            <div class="flex w100" id="select-and-go-buttons" class="margin-bottom20">
+                <select id="select-process">
+                    <option value="download">Download</option>
+                    <option value="convert">Convert</option>
+                    <option value="qr-code">QR Code</option>
+                </select>
+                <button id="start-process">Go</button>
+            </div>
+        </section>
+        <hr>
+        <section>
+            <h2>Files</h2>
+            <ul id="files-list">
+
+            </ul>
+        </section>
+    </main>
+    <footer>
+
+    </footer>
+    <script src="/main.js"></script>
+</body>
+</html>
