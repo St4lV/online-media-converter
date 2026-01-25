@@ -5,4 +5,4 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - /var/online-media-converter/downloaded:/app/node/downloaded
+      - /var/online-media-converter-main/downloaded:/app/node/downloaded
