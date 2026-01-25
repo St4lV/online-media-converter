@@ -6,12 +6,13 @@ WORKDIR /app
 
 COPY . .
 
-RUN apt update && apt upgrade -y && apt install -y ffmpeg curl unzip python ffprobe yt-dlp-ejs
+RUN apt update && apt upgrade -y && apt install -y ffmpeg curl unzip python3 python3-pip
 
 RUN curl -L -o ytdlp.zip https://github.com/yt-dlp/yt-dlp/archive/refs/heads/master.zip
 RUN unzip ytdlp.zip
 RUN rm ytdlp.zip
 RUN printf "EXPRESS_PORT=%s\nEXPRESS_PUBLIC_ROUTE=\"%s\"\n" 3000 "api/v1" > node/.env
+RUN pip install -U yt-dlp-ejs
 
 WORKDIR /app/node
 RUN npm install
