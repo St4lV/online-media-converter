@@ -9,3 +9,4 @@ unzip ytdlp.zip
 rm ytdlp.zip
 
 printf "EXPRESS_PORT=%s\nEXPRESS_PUBLIC_ROUTE=\"%s\"\n" "$express_port" "$express_public_route" > node/.env
+exec "$@"

@@ -1,5 +1,7 @@
 FROM debian:trixie
 
+ENV DEBIAN_FRONTEND=noninteractive
+
 WORKDIR /app
 
 COPY . .
