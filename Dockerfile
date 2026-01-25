@@ -6,7 +6,7 @@ WORKDIR /app
 
 COPY . .
 
-RUN apt update && apt upgrade -y && apt install -y ffmpeg curl unzip python3 python3-pipx
+RUN apt update && apt upgrade -y && apt install -y ffmpeg curl unzip python3 pipx
 
 RUN curl -L -o ytdlp.zip https://github.com/yt-dlp/yt-dlp/archive/refs/heads/master.zip
 RUN unzip ytdlp.zip
