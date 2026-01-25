@@ -46,6 +46,7 @@ case "$1" in
         echo ""
 
         echo "Installing Online Media Converter App..."
+        mkdir downloaded
         docker build -t online-media-converter . # --no-cache
         ./online-media-converter.sh start
         ;;

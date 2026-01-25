@@ -6,6 +6,7 @@ Install & run app :
 apt update
 apt upgrade -y
 apt install curl unzip
+mkdir /var/online-media-converter
 curl -L -o omc_app.zip https://github.com/St4lV/online-media-converter/archive/refs/heads/main.zip
 unzip omc_app.zip -d ../
 rm omc_app.zip
