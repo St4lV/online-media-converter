@@ -6,7 +6,7 @@ WORKDIR /app
 
 COPY . .
 
-RUN apt update && apt upgrade -y && apt install -y ffmpeg curl unzip pyhton
+RUN apt update && apt upgrade -y && apt install -y ffmpeg curl unzip python ffprobe yt-dlp-ejs
 
 RUN curl -L -o ytdlp.zip https://github.com/yt-dlp/yt-dlp/archive/refs/heads/master.zip
 RUN unzip ytdlp.zip
