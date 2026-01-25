@@ -12,7 +12,7 @@ RUN curl -L -o ytdlp.zip https://github.com/yt-dlp/yt-dlp/archive/refs/heads/mas
 RUN unzip ytdlp.zip
 RUN rm ytdlp.zip
 RUN printf "EXPRESS_PORT=%s\nEXPRESS_PUBLIC_ROUTE=\"%s\"\n" 3000 "api/v1" > node/.env
-RUN pipx install -U yt-dlp-ejs
+RUN pipx install yt-dlp-ejs
 
 WORKDIR /app/node
 RUN npm install
