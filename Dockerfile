@@ -1,4 +1,4 @@
-FROM debian:trixie
+FROM node:trixie-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 
