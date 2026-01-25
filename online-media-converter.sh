@@ -3,12 +3,9 @@
 case "$1" in
     update)
         echo "Updating..."
-        mv node/.env node/.env.bak
-        find . -type f ! -name "*.bak" -delete
         curl -L -o omc_app.zip https://github.com/St4lV/online-media-converter/archive/refs/heads/main.zip
         unzip omc_app.zip -d ../
         rm omc_app.zip
-        mv node/.env.bak node/.env
         chmod +x online-media-converter.sh
         docker compose down
         docker container prune -f
@@ -48,6 +45,7 @@ case "$1" in
         echo "Installing Online Media Converter App..."
         mkdir downloaded
         docker build -t online-media-converter . # --no-cache
+        rm -rf node Dockerfile README.md .dockerignore .gitattributes .gitignore
         ./online-media-converter.sh start
         ;;
 
