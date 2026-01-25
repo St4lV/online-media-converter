@@ -13,7 +13,7 @@ RUN rm ytdlp.zip
 RUN pip install -U yt-dlp-ejs --break-system-packages
 
 WORKDIR /app/node
-RUN printf "EXPRESS_PORT=%s\nEXPRESS_PUBLIC_ROUTE=\"%s\"\n" 3000 "api/v1" > node/.env
+RUN printf "EXPRESS_PORT=%s\nEXPRESS_PUBLIC_ROUTE=\"%s\"\n" 3000 "api/v1" > .env
 RUN npm install
 EXPOSE 3000
 CMD ["npm", "run", "start"]

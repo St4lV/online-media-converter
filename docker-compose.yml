@@ -1,6 +1,6 @@
 services:
   app:
-    image: online-media-converter
+    image: "online-media-converter"
     container_name: "online-media-converter-app"
     build: .
     ports:
