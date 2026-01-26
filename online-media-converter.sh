@@ -3,6 +3,7 @@
 case "$1" in
     update)
         echo "Updating..."
+        find . -type f ! -name "*.sh" -delete
         curl -L -o omc_app.zip https://github.com/St4lV/online-media-converter/archive/refs/heads/main.zip
         unzip omc_app.zip -d ../
         rm omc_app.zip
@@ -11,6 +12,7 @@ case "$1" in
         docker container prune -f
         docker image prune -f
         docker build -t online-media-converter . # --no-cache
+        rm -rf node Dockerfile README.md .dockerignore .gitattributes .gitignore
         echo "Updated successfully"
         ./online-media-converter.sh start
         ;;
