@@ -5,6 +5,7 @@ case "$1" in
         echo "Updating..."
         find . -type f ! -name "*.sh" -delete
         curl -L -o omc_app.zip https://github.com/St4lV/online-media-converter/archive/refs/heads/main.zip
+        rm online-media-converter.sh
         unzip omc_app.zip -d ../
         rm omc_app.zip
         chmod +x online-media-converter.sh

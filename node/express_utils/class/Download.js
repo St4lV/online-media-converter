@@ -14,6 +14,13 @@ class Download {
         const result = await dl.execute();
         return result;
     }
+
+    async getFormat(){
+        const command = ("../yt-dlp-master/./yt-dlp.sh "+this.url+"--list-formats").toString();
+        const dl = new SSHCommand(command);
+        const result = await dl.execute();
+        return result;
+    }
 }
 
 module.exports = Download;
