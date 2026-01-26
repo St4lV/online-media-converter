@@ -1,9 +1,10 @@
 const go_button = document.querySelector("#start-process");
 const select_action = document.querySelector("#select-process");
-const input_url = document.querySelector("#url-input")
+const input_url = document.querySelector("#url-input");
+const select_format_dl = document.querySelector("#select-download-format");
 
 go_button.addEventListener("click",async function() {
-    console.log(select_action.value,input_url.value)
+    console.log(select_action.value,input_url.value,select_format_dl.value)
    await selectActionMode();
 });
 
@@ -11,7 +12,7 @@ async function selectActionMode(){
     switch (select_action.value){
         
         case "download":
-            await startDownload(input_url.value,"none","none");
+            await startDownload(input_url.value,select_format_dl.value,"none");
             break;
         
         
