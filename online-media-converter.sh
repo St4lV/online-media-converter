@@ -4,7 +4,7 @@ case "$1" in
     update)
         echo "Updating..."
         curl -L -o omc_app.zip https://github.com/St4lV/online-media-converter/archive/refs/heads/main.zip
-        rm online-media-converter.sh
+        rm online-media-converter.sh docker-compose.yml
         unzip omc_app.zip -d ../
         rm omc_app.zip
         chmod +x online-media-converter.sh
