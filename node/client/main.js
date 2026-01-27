@@ -1,17 +1,24 @@
 const go_button = document.querySelector("#start-process");
 const select_action = document.querySelector("#select-process");
 const input_url = document.querySelector("#url-input");
-const select_format_dl = document.querySelector("#select-download-format");
+const action_options_display = document.querySelector("#action-options-display")
 
 go_button.addEventListener("click",async function() {
-    console.log(select_action.value,input_url.value,select_format_dl.value)
    await selectActionMode();
 });
 
+async function refreshPage() {
+    await setActionsDisplay();
+    await reloadFilesList();
+}
+(async()=>{
+    await refreshPage();
+})()
 async function selectActionMode(){
     switch (select_action.value){
         
         case "download":
+            const select_format_dl = document.querySelector("#select-download-format");
             await startDownload(input_url.value,select_format_dl.value,"none");
             break;
         
@@ -21,6 +28,7 @@ async function selectActionMode(){
         
 
         case "qr-code":
+            await startQRCode(input_url.value,false)
             break;
         
 
@@ -61,12 +69,23 @@ async function startDownload(url,format,quality) {
     console.log(result)
 }
 
+async function startQRCode(url,keep_file) {
+    const body = {
+        url:url,
+        keep_file:keep_file
+    };
+    const endpoint = '/api/v1/qrcode'
+    const result = await postRequest(endpoint,body);
+    console.log(result)
+}
+
 let files_list = []
 async function getFiles(){
     files_list = await getRequest("/api/v1/files/list");
 }
 
 async function reloadFilesList(){
+    files_list_tag.innerHTML = '';
     await getFiles();
     const files_list_tag = document.querySelector("#files-list");
     let dom = ""
@@ -79,4 +98,41 @@ async function reloadFilesList(){
     files_list_tag.innerHTML = dom;
 }
 
-reloadFilesList();
+select_action.addEventListener("change",async function(){
+    await setActionsDisplay()
+})
+
+async function setActionsDisplay(){
+    action_options_display.innerHTML="";
+    switch (select_action.value){
+        
+        case "download":
+            await setActionsDisplayDownloadFormats();
+        break;
+
+        case "convert":
+            await setActionsDisplayConvert();
+        break;
+
+        case "qrcode":
+            await setActionsDisplayQRCode();
+        break;
+    }
+}
+
+async function setActionsDisplayDownloadFormats(){
+    let dom = `<select id="select-download-format"><option value="mp4">MP4</option><option value="mp3">MP3</option></select>`
+    action_options_display.innerHTML=dom;
+}
+
+async function setActionsDisplayConvert(){
+    let dom = ''
+    action_options_display.innerHTML=dom;
+
+}
+
+async function setActionsDisplayQRCode(){
+    let dom = ''
+    action_options_display.innerHTML=dom;
+
+}
