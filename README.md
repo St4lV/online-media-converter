@@ -5,7 +5,7 @@ Install & run app :
 ```bash
 apt update
 apt upgrade -y
-apt install curl unzip
+apt install curl unzip -y
 curl -L -o omc_app.zip https://github.com/St4lV/online-media-converter/archive/refs/heads/main.zip
 unzip omc_app.zip -d /var/
 rm omc_app.zip
