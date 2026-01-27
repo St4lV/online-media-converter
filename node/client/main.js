@@ -120,7 +120,7 @@ async function assignDelBtns() {
         console.log(el.dataset)
         el.addEventListener("click", async function(){
             const file = el.dataset.filename;
-            await deleteRequest(`/api/v1/files/${file}`)
+            await deleteRequest(`/api/v1/files/${encodeURIComponent(file)}`)
             await refreshPage();
         })
     }

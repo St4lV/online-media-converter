@@ -3,3 +3,5 @@
 README.md
 online-media-converter.sh
 docker-compose.yml
+.git
+node/node_modules
