@@ -108,7 +108,7 @@ async function reloadFilesList(){
     let dom = ""
     for (el of files_list.data){
         if (!el.endsWith(".part")){
-            dom+=`<li>${el}<a href="/api/v1/files/download/${el}" download> Download </a><button data-filename="${el}" class="files-list-delete-btn">${svgs.cross}</button></li>`
+            dom+=`<li>${el}<a href="/api/v1/files/download/${encodeURIComponent(el)}" download> Download </a><button data-filename="${el}" class="files-list-delete-btn">${svgs.cross}</button></li>`
         }
     }
     files_list_tag.innerHTML = dom;
