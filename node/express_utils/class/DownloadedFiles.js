@@ -1,5 +1,5 @@
 const fs = require("fs");
-const { URLize } = require("../utils");
+const { URLize, log } = require("../utils");
 const root = require("../../root") 
 
 class DownloadedFiles {
@@ -12,7 +12,7 @@ class DownloadedFiles {
             const files = await fs.promises.readdir(this.folder);
             return {code: 200, data: files};
         } catch (err) {
-            console.error(err);
+            log.error(err)
             return {code: 500, data: 'Error while reading downloaded files'};
         }
     }
@@ -26,14 +26,28 @@ class DownloadedFiles {
                 const path = require('path');
                 file_path = path.resolve(root()+'/downloaded/'+el);
                 file_found=true;
-                console.log("Found | ",file_path)
+                log.data("Found | ",file_path)
                 return { code:200, data:file_path}
             }
         }
 
         if (!file_found){
-            console.log(`File ${file_name} not found !`)
+            log.data(`File ${file_name} not found !`)
             return {code:404,data:`File ${file_name} not found !`}
+        }
+    }
+
+    async removeByName(file_name){
+        const exist = await this.getByName(file_name);
+        if (exist.code!==200){
+            return exist;
+        }
+        try {
+            const result = await fs.promises.rm(exist.data)
+            return {code: 200, data: result};
+        } catch (err) {
+            log.error(err);
+            return {code: 500, data: 'Error while reading downloaded files'};
         }
     }
 }

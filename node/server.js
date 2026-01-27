@@ -1,5 +1,6 @@
 const express = require('express');
 const { express_values } = require("./express_utils/env-values-dictionnary");
+const { log } = require("./express_utils/utils")
 const app = express();
 const port = express_values.port;
 
@@ -24,5 +25,6 @@ app.get('/', async (req, res) => {
 });
 
 app.listen(port, async () => {
-    console.log(`Server is running on port ${port}.`);
+    log.data(`Running app on port ${port}`);
+    log.data(`Access your files with SFTP on host : /var/online-media-converter-main/downloaded`)
 });
