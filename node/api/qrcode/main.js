@@ -3,7 +3,7 @@ const { Router } = require("express");
 const router = Router();
 
 app.post("/", async (req, res) => {
-    const url = req.body.url;
+    const { url, keep_file } = req.body;
     try {
         const result = await genQRCode(url);
         return res.status(200).type("image/png").send(result);
