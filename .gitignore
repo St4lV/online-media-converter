@@ -3,3 +3,4 @@ yt-dlp-master/
 node/node_modules/
 node/.env
 node/downloaded/
+node/client/favicon.ico

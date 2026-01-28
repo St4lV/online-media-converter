@@ -1,6 +1,6 @@
 const express = require('express');
 const { express_values } = require("./express_utils/env-values-dictionnary");
-const { log } = require("./express_utils/utils")
+const { log, cronTasks, dim } = require("./express_utils/utils")
 const app = express();
 const port = express_values.port;
 
@@ -24,7 +24,18 @@ app.get('/', async (req, res) => {
     return res.status(200).sendFile('index.html', { root: __dirname + "/client/" });
 });
 
+appSetup();
+
 app.listen(port, async () => {
+    log.data(`=============================================`);
     log.data(`Running app on port ${port}`);
-    log.data(`Access your files with SFTP on host : /var/online-media-converter-main/downloaded`)
+    log.data(`=============================================`);
+    log.data(`Access your files with SFTP on host : ${dim("- /var/online-media-converter-main/downloaded")}`);
+    log.data(`This project can run thanks to yt-dlp${dim(" - https://github.com/yt-dlp/yt-dlp")}`)
 });
+
+async function appSetup() {
+    log.data("Setting up cron jobs..");
+    cronTasks();
+    log.data("Cron tasks updated.")
+}

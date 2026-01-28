@@ -1,8 +1,8 @@
 {
   "name": "online-media-converter",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js"
@@ -13,6 +13,7 @@
   "dependencies": {
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "node-cron": "^4.2.1",
     "qrcode": "^1.5.4"
   },
   "devDependencies": {
