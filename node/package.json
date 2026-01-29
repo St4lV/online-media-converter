@@ -1,6 +1,6 @@
 {
   "name": "online-media-converter",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "",
   "main": "server.js",
   "scripts": {
@@ -13,6 +13,7 @@
   "dependencies": {
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "express-fileupload": "^1.5.2",
     "node-cron": "^4.2.1",
     "qrcode": "^1.5.4"
   },

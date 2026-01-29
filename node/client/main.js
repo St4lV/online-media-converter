@@ -20,15 +20,17 @@ async function refreshPage() {
     await refreshPage();
 })()
 async function selectActionMode(){
+    const select_format_dl = document.querySelector("#select-download-format");
     switch (select_action.value){
         
         case "download":
-            const select_format_dl = document.querySelector("#select-download-format");
             await startDownload(input_url.value,select_format_dl.value,"none");
             break;
         
         
         case "convert":
+            const input_file_convert = document.querySelector("#input-file-convert");
+            await startConvert(input_file_convert.files,select_format_dl.value)
             break;
         
 
@@ -63,6 +65,17 @@ async function postRequest(url,body){
   return data;
 }
 
+async function postRequestFile(url, formData) {
+    const response = await fetch(url, {
+        method: 'POST',
+        body: formData
+    });
+    
+    const data = await response.json();
+    console.log(data);
+    return data;
+}
+
 async function deleteRequest(url){
   const response = await fetch(url, {
     method: 'DELETE',
@@ -95,6 +108,31 @@ async function startQRCode(url,keep_file) {
     const result = await postRequest(endpoint,body);
     console.log(result)
 }
+
+async function startConvert(files,new_format) {
+    
+for (let i of files) {
+    const formData = new FormData();
+    formData.append('file', i);
+    const upload_endpoint = '/api/v1/files';
+    const upload_result = await postRequestFile(upload_endpoint, formData);
+    if (upload_result.data!=="Created"){
+        return
+    }
+
+    const body = {
+        file_name:i.name,
+        new_format:new_format
+    };
+    console.log(body)
+    const endpoint = '/api/v1/convert'
+    const result = await postRequest(endpoint,body);
+    console.log(result)
+    }   
+}
+
+//FILES
+/////////////////////////////////////////////////////////////////////////////
 
 let files_list = []
 async function getFiles(){
@@ -154,7 +192,7 @@ async function setActionsDisplayDownloadFormats(){
 }
 
 async function setActionsDisplayConvert(){
-    let dom = ''
+    let dom = '<input type="file" id="input-file-convert">' + '<select id="select-download-format"><option value="mp4">MP4</option><option value="mp3">MP3</option><option value="png">PNG</option></select>'
     action_options_display.innerHTML=dom;
 
 }

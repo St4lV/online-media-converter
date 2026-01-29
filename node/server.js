@@ -1,11 +1,19 @@
 const express = require('express');
+const fileUpload = require("express-fileupload");
+
 const { express_values } = require("./express_utils/env-values-dictionnary");
 const { log, cronTasks, dim } = require("./express_utils/utils")
+
 const app = express();
 const port = express_values.port;
 
 app.use(express.json());
+app.use(fileUpload());
+
 app.set('trust proxy', true);
+
+// Routes declarations
+///////////////////////////////////////////////////////////////////////
 
 const api_routes = require("./api/routes");
 app.use(`/${express_values.public_route}`, api_routes);
@@ -23,6 +31,9 @@ app.get('/favicon.ico', async (req, res) => {
 app.get('/', async (req, res) => {
     return res.status(200).sendFile('index.html', { root: __dirname + "/client/" });
 });
+
+// Setup and start
+///////////////////////////////////////////////////////////////////////
 
 appSetup();
 

@@ -1,15 +1,16 @@
 const fs = require("fs");
 const { URLize, log } = require("../utils");
-const root = require("../../root") 
+const root = require("../../root")
 
 class DownloadedFiles {
     constructor(){
-        this.folder = './downloaded';
+        this._folder = './downloaded';
+        this._files;
     }
 
     async getFiles(){
         try {
-            const files = await fs.promises.readdir(this.folder);
+            const files = await fs.promises.readdir(this._folder);
             return {code: 200, data: files};
         } catch (err) {
             log.error(err)
@@ -18,10 +19,11 @@ class DownloadedFiles {
     }
 
     async getByName(file_name){
-        const files = await this.getFiles();
+        const file_response= await this.getFiles();
+        this._files = file_response.data;
         let file_found = false;
         let file_path = "";
-        for (let el of files.data){
+        for (let el of this._files){
             if (URLize(el) === URLize(file_name)){
                 const path = require('path');
                 file_path = path.resolve(root()+'/downloaded/'+el);
@@ -49,6 +51,14 @@ class DownloadedFiles {
             log.error(err);
             return {code: 500, data: 'Error while reading downloaded files'};
         }
+    }
+
+    async upload(file){
+
+    }
+
+    async rename(file){
+
     }
 }
 
