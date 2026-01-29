@@ -9,7 +9,7 @@ class Download {
 
     async start(){
         const format = this.format !=="none"? "-t "+this.format:"-t best";
-        const command = ("../yt-dlp-master/./yt-dlp.sh -P ../node/downloaded "+this.url+" --no-js-runtimes "+format).toString();
+        const command = ("../yt-dlp-master/./yt-dlp.sh -P ../node/downloaded "+this.url+" --js-runtimes node --remote-components ejs:github "+format).toString();
         const dl = new SSHCommand(command);
         const result = await dl.execute();
         return result;

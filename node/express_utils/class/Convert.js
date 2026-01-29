@@ -17,10 +17,17 @@ class Convert {
             return get_base_file;
         }
 
-        const file = get_base_file.data.split("downloaded/")[-1];
-        log.data(`Converting file : ${file} to ${new_format} ..`);
+        const file_name_dot_array = this.file_name.split(".")
+        let new_file_name = "";
+        for (let i = 0;i<file_name_dot_array.length-1;i++){
+            new_file_name += file_name_dot_array[i]+"."
+        }
+        new_file_name+=new_format
+        log.data(`Converting file : ${this.file_name} to ${new_format} ..`);
 
-        const cmd = `ffmpeg -i downloaded/${this.file_name} -c ${this.file_name}.${new_format}`
+        const cmd = `ffmpeg -i "./downloaded/${this.file_name}" "./downloaded/${new_file_name}"`
+        log.data(cmd)
+
         const ssh = new SSHCommand(cmd);
         const result = ssh.execute();
         
