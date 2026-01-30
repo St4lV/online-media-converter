@@ -7,7 +7,7 @@ router.post("/", async (req, res)=>{
     const { url, format, quality} = req.body;
     const download = new Download(url,format,quality);
     const result = await download.start();
-    res.status(200).json({sent:"true"});
+    res.status(result.code).json({data:result.data});
 })
 
 module.exports = router;
