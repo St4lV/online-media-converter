@@ -64,11 +64,12 @@ async function updateStorageData() {
     const storage_display = document.querySelector("#files-list-storage");
     const storage = await getRequest("/api/v1/files/storage")
 
-    const bsize = storage.data.bsize
-    const bavail = storage.data.bavail
-    const total_size_bytes =  bsize*bavail
-
-    let dom = `<p>${total_files_count} files - ${formatSize(total_files_size_bytes)} / ${formatSize(total_size_bytes)} (${(total_files_size_bytes*100 / total_size_bytes).toFixed(2)} % )</p><progress id="file-list-storage-stockage-progress" max="${total_size_bytes}" value="${total_files_size_bytes}">`
+    const bsize = storage.data.bsize;
+    const bavail = storage.data.bavail;
+    const blocks = storage.data.blocks;
+    const total_available_size_bytes =  bsize * bavail;
+    const total_gb = blocks * bsize
+    let dom = `<p>${total_files_count} files - ${formatSize(total_files_size_bytes)} / ${formatSize(total_available_size_bytes)} (${formatSize(total_available_size_bytes)} - ${(total_files_size_bytes * 100 / total_gb).toFixed(2)} % )</p><progress id="file-list-storage-stockage-progress" max="${total_gb}" value="${total_files_size_bytes}">`
     storage_display.innerHTML = dom;
 }
 
