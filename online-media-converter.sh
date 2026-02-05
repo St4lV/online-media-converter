@@ -10,7 +10,7 @@ case "$1" in
         chmod +x online-media-converter.sh
         docker compose down
         docker container prune -f
-        docker image prune -f
+        docker system prune -f
         docker build -t online-media-converter . # --no-cache
         rm -rf node Dockerfile README.md .dockerignore .gitattributes .gitignore
         echo "Updated successfully"
