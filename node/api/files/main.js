@@ -1,7 +1,6 @@
 const { Router } = require("express");
 const router = Router();
 const DownloadedFiles = require("../../express_utils/class/DownloadedFiles")
-const root = require("../../root")
 
 router.get("/list", async (req, res) => {
 	const dl_files = new DownloadedFiles();
@@ -20,6 +19,12 @@ router.get("/download/:file_name", async (req, res) => {
 	return res.status(200).sendFile(files.data);
 });
 
+router.get("/storage", async (req, res) => {
+	const dl_files = new DownloadedFiles();
+	const result = await dl_files.getAvailableStorage();
+	return res.status(result.code).json({ data: result.data });
+});
+
 router.delete("/:file_name",async (req, res) => {
 	const { file_name } = req.params;
 	const dl_files = new DownloadedFiles();
@@ -33,16 +38,10 @@ router.delete("/:file_name",async (req, res) => {
 router.post("/", async (req, res) => {
     
     if (req.files && req.files.file) {
-        const uploadedFile = req.files.file;
-        const uploadPath = root() + "/downloaded/" + uploadedFile.name;
-        uploadedFile.mv(uploadPath, function (err) {
-            if (err) {
-                console.log(err);
-                res.status(500).json({ data: err });
-            } else {
-                res.status(201).json({ data: "Created" });
-            }
-        });
+        const uploaded_file = req.files.file;
+		const upload_file = new DownloadedFiles();
+		const result = await upload_file.upload(uploaded_file)
+        res.status(result.code).json({data:result.data})
     } else {
         res.status(400).json({ data: "Bad request" });
     }

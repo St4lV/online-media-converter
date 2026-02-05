@@ -7,6 +7,8 @@
 body {
     background-color: #302e2e;
     color: white;
+    height: 100%;
+    font-family: sans-serif;
 }
 
 a {
@@ -14,10 +16,23 @@ a {
     text-decoration: none;
 }
 
-header, header * {
-    align-items: center;
+header {
     background-color: #000000;
+    width: 100%;
     
+}
+
+header div {
+    align-items: center;
+    justify-content: center;
+}
+
+main {
+    background-color: #00000078;
+    width: 100%;
+    padding: 10px 15px;
+    align-self: center;
+    min-height: 85vh;
 }
 
 .flex{
@@ -74,8 +89,8 @@ https://cssloaders.github.io/
 */
 
 .loader {
-    width: 16px;
-    height: 16px;
+    width: 32px;
+    height: 32px;
     border: 5px solid #FFF;
     border-bottom-color: transparent;
     border-radius: 50%;
@@ -95,3 +110,204 @@ https://cssloaders.github.io/
 /*
 ========
 */
+
+.clickable-element:hover{
+    color: #d0d0d0;
+    cursor: pointer;
+}
+
+/* ACTION BAR */
+/*============*/
+
+#action-bar{
+    display: none;
+}
+
+#action-bar-v2-choice{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap:5px;
+    min-height: 50px;
+}
+
+#action-bar-v2-choice h2{
+    transition: linear font-size 0.1s;
+}
+
+#action-bar-v2-choice h2:hover{
+    font-size: 1.8em;
+    transition: linear font-size 0.2s;
+}
+
+#action-bar-v2-choice hr {
+    height: 25px;
+}
+
+#action-bar-v2-options{
+    overflow: hidden;
+}
+
+#action-bar-v2-options[data-step="0"]{
+    height: 0px;
+    transition:ease-in-out height 0.3s;
+}
+
+#action-bar-v2-options[data-step="1"]{
+    height: 150px;
+    transition:ease-in-out height 0.3s;
+}
+
+#action-bar-v2-options[data-step="2"]{
+    height: 300px;
+    transition:ease-in-out height 0.3s;
+}
+
+#action-bar-v2-options[data-step="3"]{
+    height: 450px;
+    transition:ease-in-out height 0.3s;
+}
+
+#action-bar-v2-options-dl-holder{
+    display: flex;
+    height: 100%;
+    align-items: center;
+    justify-content: space-around;
+    flex-direction: column;
+}
+
+.action-bar-v2-options-step{
+    min-height: 150px;
+}
+
+/*-- DOWNLOAD --*/
+
+#action-bar-v2-options-input-url-holder{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+    min-height: 150px;
+}
+
+.action-bar-v2-options-input-url{
+    width: 800px;
+    color: white;
+    background-color: #00000000;
+    border-color: #4d4d4d;
+    font-size: 1em;
+    text-align: center;
+}
+
+#action-bar-v2-options-url-start-fetch-format{
+    font-size: 1.7em;
+    padding: 5px 40px;
+}
+
+#action-bar-v2-options-select-format-dl-retry{
+    font-size: 1.1em;
+    padding: 1px 10px;
+}
+
+#action-bar-v2-options-select-and-btn{
+    display: flex;
+	flex-direction: column;
+    gap:15px;
+}
+
+#action-bar-v2-options-select-format-dl{
+	text-align: center;
+}
+
+#action-bar-v2-options-btn-download{
+    width: 400px;
+}
+
+/*----------*/
+
+#action-bar-v2-options-convert-holder{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 150px;
+}
+
+#action-bar-v2-options-convert-step-1{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+    min-height: 150px;
+}
+
+#action-bar-v2-options-convert-input-options-holder{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#action-bar-v2-options-convert-input-options-holder * {
+    width: 500px;
+    align-self: center;
+    text-align: center;
+}
+
+#action-bar-v2-options-next-btn{
+    font-size: 1.7em;
+    padding: 5px 40px;
+}
+
+/* FILES LIST */
+/*============*/
+
+#section-files-list{
+    justify-self: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+}
+
+#files-list-storage{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    align-items: center;
+}
+
+#file-list-storage-stockage-progress{
+    width: 100%;
+    height: 20px;
+    font-size: 2em;
+}
+
+#files-list-table{
+    border-collapse: collapse;
+}
+
+.files-list-table-filename-tr, #files-list-thead-tr{
+    border-bottom: #FFF solid 1px;
+}
+
+.files-list-size-display{
+    text-align: center;
+}
+
+.files-list-table-options-btns{
+    padding: 0 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+}
+
+.files-list-download-btn svg{
+    width : 32px;
+    height: 32px;
+}
+
+.files-list-delete-btn svg{
+    width : 32px;
+    height: 32px;
+}
+

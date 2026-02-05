@@ -1,4 +1,5 @@
 const fs = require("fs");
+const path = require('path');
 const { URLize, log } = require("../utils");
 const root = require("../../root")
 
@@ -9,12 +10,19 @@ class DownloadedFiles {
     }
 
     async getFiles(){
+        await this.getAvailableStorage()
         try {
             const files = await fs.promises.readdir(this._folder);
-            return {code: 200, data: files};
+            const filesWithSize = await Promise.all(
+                files.map(async (name) => {
+                    const stats = await fs.promises.stat(path.join(this._folder, name));
+                    return { name, size: stats.size };
+                })
+            );
+            return { code: 200, data: filesWithSize };
         } catch (err) {
-            log.error(err)
-            return {code: 500, data: 'Error while reading downloaded files'};
+            log.error(err);
+            return { code: 500, data: 'Error while reading downloaded files' };
         }
     }
 
@@ -24,9 +32,9 @@ class DownloadedFiles {
         let file_found = false;
         let file_path = "";
         for (let el of this._files){
-            if (URLize(el) === URLize(file_name)){
+            if (URLize(el.name) === URLize(file_name)){
                 const path = require('path');
-                file_path = path.resolve(root()+'/downloaded/'+el);
+                file_path = path.resolve(root()+'/downloaded/'+el.name);
                 file_found=true;
                 log.data("Found | ",file_path)
                 return { code:200, data:file_path}
@@ -54,11 +62,24 @@ class DownloadedFiles {
     }
 
     async upload(file){
+        const uploadPath = root() + "/downloaded/" + file.name;
+        file.mv(uploadPath, function (err) {
+            if (err) {
+                console.log(err);
+                return {code:500,data:err};
+            } else {
+                return {code:201,data:"Created"}
+            }
+        });
+    }
+
+    async rename(file_name,new_name){
 
     }
 
-    async rename(file){
-
+    async getAvailableStorage() {
+    const stats = await fs.promises.statfs(root() + "/downloaded/");
+    return {code: 200, data: stats };
     }
 }
 
