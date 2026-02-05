@@ -208,7 +208,7 @@ function actionModeDownload(){
     })
     
     async function fetchAvailableFormats(){
-        const result = await getRequest(`/api/v1/download/${encodeURIComponent(url_input.value)}`);
+        const result = await getRequest(`/api/v1/download/${encodeURIComponent(clearUrl(url_input.value))}`);
         return result;
     }
 
@@ -219,9 +219,14 @@ function actionModeDownload(){
         startAutoReload();
 
         const audio_only = !(available_formats_select.value === "mp4");
-        const result = await startDownload(url_input.value,available_formats_select.value,"best",audio_only);
+        const result = await startDownload(clearUrl(url_input.value),available_formats_select.value,"best",audio_only);
         console.log(result);
-    } 
+    }
+
+    function clearUrl(url){
+        const result = ((url.split("?si=")[0]).split("&si=")[0]).split("&list=")[0];
+        return result;
+    }
     
 }
 

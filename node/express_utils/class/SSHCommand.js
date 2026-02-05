@@ -8,29 +8,22 @@ class SSHCommand {
 
     async execute(){
         return new Promise((resolve, reject) => {
-            try {
-                const subProcess = require('child_process')
-                subProcess.exec(this.command, (err, stdout, stderr) => {
+            const subProcess = require('child_process');
+            subProcess.exec(this.command, (err, stdout, stderr) => {
                 if (err) {
-                    console.log(`[${pjson.name}@${pjson.version}] `+err)
-                    reject({ code: 500, data: err.message, stderr: stderr.toString() });
+                    console.error(`[${pjson.name}@${pjson.version}] ${err}`);
+                    resolve({ code: 500, data: stderr.toString() });
                 } else {
-                    resolve({ 
+                    resolve({
                         code: 200,
-                        data : {
-                            stdout: stdout.toString(), 
-                            stderr: stderr.toString() 
+                        data: {
+                            stdout: stdout.toString(),
+                            stderr: stderr.toString()
                         }
                     });
                 }
-                });
-                return {code:200,data:"Success"}
-            } catch (err) {
-                console.error(`[${pjson.name}@${pjson.version}] `+err)
-                return {code:500,data:err}
-            }
-        
-        })
+            });
+        });
     }
 
 }
