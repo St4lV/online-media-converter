@@ -43,7 +43,7 @@ function startAutoReload() {
     // https://developer.mozilla.org/en-US/docs/Web/API/Window/setInterval#example_2_alternating_two_colors
     intervalId = setInterval(async function() {
         await refreshPage();
-        console.log("auto reload")
+        //console.log("auto reload")
     }, 1000);
 }
 
@@ -220,7 +220,7 @@ function actionModeDownload(){
 
         const audio_only = !(available_formats_select.value === "mp4");
         const result = await startDownload(clearUrl(url_input.value),available_formats_select.value,"best",audio_only);
-        console.log(result);
+        //console.log(result);
     }
 
     function clearUrl(url){
@@ -230,7 +230,7 @@ function actionModeDownload(){
     
 }
 
-function actionModeConvert(){
+async function actionModeConvert(){
 /* ID template = id="action-bar-v2-options-convert" */
     const dom_init = `
 <menu id ="action-bar-v2-options-convert-holder">
@@ -241,40 +241,236 @@ function actionModeConvert(){
             <option value="srv" selected>From server</option>
         </select>
         <div id ="action-bar-v2-options-convert-input-options-holder">
-            <select id="action-bar-v2-options-convert-file-select"><option selected disabled>None</option></select>
+            <select id="action-bar-v2-options-convert-file-select">
+                <option value="none" selected disabled>None</option>
+            </select>
         </div>
         <div id ="action-bar-v2-options-next-btn-holder">
             <button id="action-bar-v2-options-next-btn">Next</button>
         </div>
     </div>
+    <div id ="action-bar-v2-options-convert-step-2">
+        <select = id="action-bar-v2-options-convert-select-convert-format">
+            <option value="none" selected disabled>None</option>
+        </select>
+        <div id="action-bar-v2-options-convert-button-start-convert-holder">
+            <button id="action-bar-v2-options-convert-button-start-convert">Convert</button>
+        </div>
+    </div>
 </menu>
 `;
     action_bar_v2_options.innerHTML = dom_init;
-    populateFilelistSelect()
+
     const options_select = document.querySelector("#action-bar-v2-options-convert-input-select-options");
     const options_holder = document.querySelector("#action-bar-v2-options-convert-input-options-holder");
+    const next_btn_holder = document.querySelector("#action-bar-v2-options-next-btn-holder");
+    const select_convert_format = document.querySelector("#action-bar-v2-options-convert-select-convert-format");
+    const start_convert_btn_holder = document.querySelector("#action-bar-v2-options-convert-button-start-convert-holder");
+    const start_convert_btn = document.querySelector("#action-bar-v2-options-convert-button-start-convert");
+
+
+    let convert_action_mode = "srv";
+    let file_name = "none";
+    let new_format = "none";
+
+    await setupActionMode(convert_action_mode);
+    await setupAvailableConvertFormatsSelect();
 
     options_select.addEventListener("change",async function(){
-        switch (this.value){
+       await setupActionMode(this.value)
+    });
+
+    start_convert_btn.addEventListener("click",async function () {
+        setLoading();
+       
+        const cleaned_format = select_convert_format.value.split(".");
+        new_format = cleaned_format[cleaned_format.length-1];
+
+        const result = await startConvert();
+
+        if (result.status!==200){
+            setReject();
+            return
+        }
+        
+        const del_result = await deleteRequest(`/api/v1/files/${encodeURIComponent(file_name)}`);
+
+        if (del_result.status!==200){
+            setReject();
+            return
+        }
+
+        setValid();
+        await reloadFilesList();
+
+        function setLoading(){
+            start_convert_btn_holder.innerHTML=`<span class="loader"></span>`;
+        }
+
+        function setValid(){
+            start_convert_btn_holder.innerHTML=`${svgs.check}`;
+        }
+
+        function setReject(){
+            start_convert_btn_holder.innerHTML=`${svgs.cross}`;
+        }
+    })
+
+    async function setupAvailableConvertFormatsSelect(){
+
+        let dom ="";
+        const format_list = await getConvertFormats();
+        const last_selected_format = localStorage.getItem("last_convert_format");
+
+        for (let el of format_list){
+            const selected = last_selected_format === el ? "selected" : "";
+            dom+=`<option value=${el} ${selected} >${el}</option>`
+        }
+
+        select_convert_format.innerHTML=dom;
+    }
+
+    async function setupActionMode(value){
+        next_btn_holder.innerHTML=`<span class="loader"></span>`
+         switch (value){
+            // Download from url and convert
             case "dl":
-                options_holder.innerHTML=`<input id="action-bar-v2-options-convert-url-input" type="text">`;
+                options_holder.innerHTML=`<input id="action-bar-v2-options-convert-url-input" placeholder="URL" type="text">`;
                 break;
+            // Upload from client and convert
             case "upl":
                 options_holder.innerHTML=`<input id="action-bar-v2-options-convert-file-input" type="file">`;
                 break;
+            // Get file on server and convert
             case "srv":
                 options_holder.innerHTML=`<select id="action-bar-v2-options-convert-file-select"><option selected disabled>None</option></select>`;
                 await populateFilelistSelect();
                 break;
+            case "":
+                return;
         };
-        goToStep2(this.value);
-    })
+        convert_action_mode=value;
+        next_btn_holder.innerHTML=`<button id="action-bar-v2-options-next-btn">Next</button>`;
+        next_btn_holder.innerHTML=`<button id="action-bar-v2-options-next-btn">Next</button>`;
+        const next_btn_step_1 = document.querySelector("#action-bar-v2-options-next-btn");
+        next_btn_step_1.addEventListener("click", async function() {
+            await nextButtonAction();
+        })
+    }
 
-    const url_input_element = document.querySelector("#action-bar-v2-options-convert-url-input");
-    const file_input_element = document.querySelector("#action-bar-v2-options-convert-file-input");
-    
-    const next_btn_step_1 = document.querySelector("#action-bar-v2-options-next-btn");
-    
+    async function nextButtonAction(){
+        function setLoading(){
+            next_btn_holder.innerHTML=`<span class="loader"></span>`;
+        }
+
+        function setValid(){
+            next_btn_holder.innerHTML=`${svgs.check}`;
+        }
+
+        function setReject(){
+            next_btn_holder.innerHTML=`${svgs.cross}`;
+        }
+
+        switch (convert_action_mode){
+            case "dl":
+                const url_input_element = document.querySelector("#action-bar-v2-options-convert-url-input");
+                if (url_input_element.value===""){
+                    return;
+                }
+                setLoading();
+
+                const formats_data = await fetchAvailableFormats();
+
+                if (formats_data.status!==200){
+                    setReject();
+                    return;
+                }
+
+                const formats_list = formats_data.data.formats;
+                let mp3_or_mp4_selected = false;
+
+                let dl_format = "none";
+                for (let el of formats_list){
+                    if (!mp3_or_mp4_selected){
+                        if (el.ext === "mp3" || el.ext === "mp4"){
+                            dl_format = el.ext;
+                            mp3_or_mp4_selected=true
+                        }
+                    }
+                }
+
+                if (dl_format==="none"){
+                    setReject();
+                    return;
+                }
+                const downloaded = await downloadFile()
+
+                if (downloaded.status!==201){
+                    console.error("Convert handler - Error downloading file : ",downloaded.data)
+                }
+
+                await reloadFilesList();
+                const media_id = formats_data.data.mediaId
+                for (let el of files_list.data){
+                    if (el.name.includes(`[${media_id}]`)){
+                        file_name = el.name;
+                    }
+                }
+                if (file_name==="none"){
+                    setReject();
+                    return;
+                }
+
+                setValid();
+                // -> Next step 
+                //---------------
+
+                async function fetchAvailableFormats(){
+                    const result = await getRequest(`/api/v1/download/${encodeURIComponent(clearUrl(url_input_element.value))}`);
+                    return result;
+                }
+
+                async function downloadFile() {
+
+                    graceReloadUntil = Date.now() + grace_period_ms;
+                    await refreshPage();
+                    startAutoReload();
+
+                    const audio_only = !(dl_format === "mp4");
+                    const result = await startDownload(clearUrl(url_input_element.value),dl_format,"best",audio_only);
+                    //console.log(result);
+                    return result;
+                }
+
+                break;
+            case "upl":
+                const file_input_element = document.querySelector("#action-bar-v2-options-convert-file-input");
+                if (file_input_element.files.length===0){
+                    return
+                }
+                setLoading();
+                console.error("Not yet available")
+                setReject();
+                return;
+                break;
+            case "srv":
+                const select_file_from_server = document.querySelector("#action-bar-v2-options-convert-file-select");
+                if (select_file_from_server.value==="none"){
+                    return
+                }
+                setLoading();
+                file_name=select_file_from_server.value
+                setValid();
+                break;
+            case "":
+                setReject();
+                return;
+            
+        }
+
+        setActionBarStep(2);
+    }
+
     async function populateFilelistSelect(){
         
         const files_select_element = document.querySelector("#action-bar-v2-options-convert-file-select");
@@ -286,11 +482,41 @@ function actionModeConvert(){
         files_select_element.innerHTML=dom;
     }
 
-    async function goToStep2(mode){
-
+    async function getConvertFormats(){
+        list = [
+            ".webp",
+            ".mp3",
+            ".mp4",
+            ".png",
+            ".jpg",
+            ".ogg",
+            ".aiff",
+            ".mov",
+            ".wav",
+            ".flac",
+            ".gif",
+        ];
+        return list;
     }
 
+    async function startConvert(){
+        const last_selected = select_convert_format.value;
+        localStorage.setItem("last_convert_format",last_selected);
+        const body = {
+            file_name: file_name,
+            new_format: new_format
+        };
+        const endpoint = '/api/v1/convert'
+        const result = await postRequest(endpoint, body);
+        return result;
+    }
+
+    function clearUrl(url){
+        const result = ((url.split("?si=")[0]).split("&si=")[0]).split("&list=")[0];
+        return result;
+    }
 }
+
 // ACTION BAR V1
 
 async function selectActionMode() {
@@ -332,7 +558,7 @@ async function getRequest(url) {
     const response = await fetch(url)
     const data = await response.json();
     const code = response.status;
-    console.log({status:code,data:data.data});
+    //console.log({status:code,data:data.data});
     return {status:code,data:data.data};
 }
 
@@ -346,7 +572,7 @@ async function postRequest(url, body) {
     });
     const data = await response.json();
     const code = response.status;
-    console.log({status:code,data:data.data});
+    //console.log({status:code,data:data.data});
     return {status:code,data:data.data};
 }
 
@@ -358,7 +584,7 @@ async function postRequestFile(url, formData) {
 
     const data = await response.json();
     const code = response.status;
-    console.log({status:code,data:data.data});
+    //console.log({status:code,data:data.data});
     return {status:code,data:data.data};
 }
 
@@ -371,7 +597,7 @@ async function deleteRequest(url) {
     });
     const data = await response.json();
     const code = response.status;
-    console.log({status:code,data:data.data});
+    //console.log({status:code,data:data.data});
     return {status:code,data:data.data};
 }
 
@@ -400,7 +626,7 @@ async function startQRCode(url, keep_file) {
     //console.log(result)
 }
 
-async function startConvert(mode, files, new_format) {
+/*async function startConvert(mode, files, new_format) {
     if (mode === "upload") {
         for (let i of files) {
             const formData = new FormData();
@@ -424,7 +650,7 @@ async function startConvert(mode, files, new_format) {
 
         const file_url = input_url.value
         const dl_result = await startDownload(file_url, "none", "none");
-        console.log(dl_result)
+        //console.log(dl_result)
         await reloadFilesList();
 
         let selected_file_name = "none";
@@ -438,7 +664,7 @@ async function startConvert(mode, files, new_format) {
         file_url_id = file_url_id.split("?")[0];
         //console.log(file_url_id)
         for (let i of files_list.data){
-            console.log(i)
+            //console.log(i)
             if (i.name.includes(file_url_id)){
                 selected_file_name=i.name
             }
@@ -461,7 +687,7 @@ async function startConvert(mode, files, new_format) {
     }
     await refreshPage();
 
-}
+}*/
 
 //FILES
 /////////////////////////////////////////////////////////////////////////////
@@ -504,7 +730,7 @@ async function reloadFilesList() {
 
     files_list_tag.innerHTML = dom;
     const inGracePeriod = Date.now() < graceReloadUntil;
-    console.log(inGracePeriod)
+    //console.log(inGracePeriod)
     if (hasTemporaryFiles || inGracePeriod) {
         startAutoReload();
     } else {
