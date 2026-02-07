@@ -15,7 +15,7 @@ class Download {
             return {code : 400,data:"url field should not be empty"}
         }
         const codec = this.audio_only ? "mp3" : "mp4";
-        const command = (`../yt-dlp-master/./yt-dlp.sh -P ../node/downloaded ${this.url} --js-runtimes node --remote-components ejs:github -f ${format} -t ${codec}`/*+" --cookies-from-browser firefox"*/).toString();
+        const command = (`../yt-dlp-master/./yt-dlp.sh -P ../node/downloaded ${this.url} --js-runtimes node --remote-components ejs:github -f ${format} -t ${codec}`+" --cookies-from-browser firefox").toString();
         const dl = new SSHCommand(command);
         const result = await dl.execute();
         return {code:201,data:result.data};

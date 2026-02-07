@@ -202,7 +202,7 @@ function actionModeDownload(){
         btn_dl.addEventListener("click",async function() {
             btn_dl_holder.innerHTML='<span class="loader"></span>';
             await downloadFile();
-            updateActionBarOptions("none")
+            updateActionBarOptions("none");
         });
         setActionBarStep(2);
     })
@@ -301,7 +301,8 @@ async function actionModeConvert(){
         }
 
         setValid();
-        await reloadFilesList();
+        await refreshPage();
+        updateActionBarOptions("none");
 
         function setLoading(){
             start_convert_btn_holder.innerHTML=`<span class="loader"></span>`;
@@ -409,7 +410,7 @@ async function actionModeConvert(){
                     console.error("Convert handler - Error downloading file : ",downloaded.data)
                 }
 
-                await reloadFilesList();
+                await refreshPage();
                 const media_id = formats_data.data.mediaId
                 for (let el of files_list.data){
                     if (el.name.includes(`[${media_id}]`)){
@@ -742,7 +743,9 @@ async function assignDelBtns() {
     const files_list_delete_btn = document.querySelectorAll(".files-list-delete-btn");
     for (let el of files_list_delete_btn) {
         //console.log(el.dataset)
+        console.log(el)
         el.addEventListener("click", async function() {
+            console.log("delete btn")
             const file = el.dataset.filename;
             await deleteRequest(`/api/v1/files/${encodeURIComponent(file)}`)
             await refreshPage();
