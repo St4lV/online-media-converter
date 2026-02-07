@@ -63,13 +63,15 @@ class DownloadedFiles {
 
     async upload(file){
         const uploadPath = root() + "/downloaded/" + file.name;
-        file.mv(uploadPath, function (err) {
-            if (err) {
-                console.log(err);
-                return {code:500,data:err};
-            } else {
-                return {code:201,data:"Created"}
-            }
+        return new Promise((resolve, reject) => {
+            file.mv(uploadPath, (err) => {
+                if (err) {
+                    console.log(err);
+                    resolve({ code: 500, data: err });
+                } else {
+                    resolve({ code: 201, data: "Created" });
+                }
+            });
         });
     }
 

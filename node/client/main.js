@@ -444,15 +444,30 @@ async function actionModeConvert(){
                 }
 
                 break;
+            
             case "upl":
                 const file_input_element = document.querySelector("#action-bar-v2-options-convert-file-input");
                 if (file_input_element.files.length===0){
+                    setReject();
                     return
                 }
                 setLoading();
-                console.error("Not yet available")
-                setReject();
-                return;
+                for (let i of file_input_element.files) {
+                    //console.log(i)
+                    const formData = new FormData();
+                    formData.append('file', i);
+                    const upload_endpoint = '/api/v1/files';
+                    const upload_result = await postRequestFile(upload_endpoint, formData);
+                    if (upload_result.status !== 201) {
+                        setReject();
+                        return
+                    }
+                    file_name = i.name
+                    await refreshPage();
+                }
+                setValid();
+                
+                //console.log(result)
                 break;
             case "srv":
                 const select_file_from_server = document.querySelector("#action-bar-v2-options-convert-file-select");
@@ -515,41 +530,6 @@ async function actionModeConvert(){
     function clearUrl(url){
         const result = ((url.split("?si=")[0]).split("&si=")[0]).split("&list=")[0];
         return result;
-    }
-}
-
-// ACTION BAR V1
-
-async function selectActionMode() {
-    switch (select_action.value) {
-
-        case "download":
-            const select_format_dl = document.querySelector("#select-download-format");
-            await startDownload(input_url.value, select_format_dl.value, "none");
-            break;
-
-
-        case "convert":
-            const input_file_convert = document.querySelector("#input-file-convert");
-            const select_format_convert = document.querySelector("#select-convert-format");
-
-            const convert_mode = input_file_convert.files.length > 0 ? "upload" : input_url.value != "" ? "download" : "error";
-            if (convert_mode === "error") {
-                console.error("No file or url to convert")
-                return
-            }
-            await startConvert(convert_mode, input_file_convert.files, select_format_convert.value)
-            break;
-
-
-        case "qr-code":
-            await startQRCode(input_url.value, false)
-            break;
-
-
-        case "":
-            return
-
     }
 }
 
@@ -627,69 +607,6 @@ async function startQRCode(url, keep_file) {
     //console.log(result)
 }
 
-/*async function startConvert(mode, files, new_format) {
-    if (mode === "upload") {
-        for (let i of files) {
-            const formData = new FormData();
-            formData.append('file', i);
-            const upload_endpoint = '/api/v1/files';
-            const upload_result = await postRequestFile(upload_endpoint, formData);
-            if (upload_result.data !== "Created") {
-                return
-            }
-
-            const body = {
-                file_name: i.name,
-                new_format: new_format
-            };
-            //console.log(body)
-            const endpoint = '/api/v1/convert'
-            const result = await postRequest(endpoint, body);
-            //console.log(result)
-        }
-    } else if (mode === "download") {
-
-        const file_url = input_url.value
-        const dl_result = await startDownload(file_url, "none", "none");
-        //console.log(dl_result)
-        await reloadFilesList();
-
-        let selected_file_name = "none";
-        const file_url_id_array = file_url.split("/")
-        let file_url_id = file_url_id_array[file_url_id_array.length-1]
-
-        if (file_url_id.includes("?v=")){
-            file_url_id = file_url_id.split("?v=")[file_url_id.split("?v=").length-1]
-        }
-        //console.log(file_url_id)
-        file_url_id = file_url_id.split("?")[0];
-        //console.log(file_url_id)
-        for (let i of files_list.data){
-            //console.log(i)
-            if (i.name.includes(file_url_id)){
-                selected_file_name=i.name
-            }
-
-        }
-        
-        if (selected_file_name==="none"){
-            return
-        }
-        const body = {
-            file_name: selected_file_name,
-            new_format: new_format
-        };
-        const endpoint = '/api/v1/convert'
-        const result = await postRequest(endpoint, body);
-        //console.log(result)
-
-        const del_result = await deleteRequest(`/api/v1/files/${encodeURIComponent(selected_file_name)}`);
-        //console.log(del_result)
-    }
-    await refreshPage();
-
-}*/
-
 //FILES
 /////////////////////////////////////////////////////////////////////////////
 
@@ -701,6 +618,7 @@ function isTemporaryFile(filename) {
 async function getFiles() {
     files_list = await getRequest("/api/v1/files/list");
 }
+
 async function reloadFilesList() {
     const files_list_tag = document.querySelector("#files-list");
 
@@ -742,10 +660,7 @@ async function reloadFilesList() {
 async function assignDelBtns() {
     const files_list_delete_btn = document.querySelectorAll(".files-list-delete-btn");
     for (let el of files_list_delete_btn) {
-        //console.log(el.dataset)
-        console.log(el)
         el.addEventListener("click", async function() {
-            console.log("delete btn")
             const file = el.dataset.filename;
             await deleteRequest(`/api/v1/files/${encodeURIComponent(file)}`)
             await refreshPage();

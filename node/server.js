@@ -8,7 +8,9 @@ const app = express();
 const port = express_values.port;
 
 app.use(express.json());
-app.use(fileUpload());
+app.use(fileUpload({
+    defParamCharset: 'utf8',
+}));
 
 app.set('trust proxy', true);
 
