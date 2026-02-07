@@ -69,7 +69,7 @@ async function updateStorageData() {
     const blocks = storage.data.blocks;
     const total_available_size_bytes =  bsize * bavail;
     const total_gb = blocks * bsize
-    let dom = `<p>${total_files_count} files - ${formatSize(total_files_size_bytes)} / ${formatSize(total_available_size_bytes)} (${formatSize(total_available_size_bytes)} - ${(total_files_size_bytes * 100 / total_gb).toFixed(2)} % )</p><progress id="file-list-storage-stockage-progress" max="${total_gb}" value="${total_files_size_bytes}">`
+    let dom = `<p>${total_files_count} files - ${formatSize(total_files_size_bytes)} / ${formatSize(total_gb)} (${formatSize(total_available_size_bytes)} available - ${(total_files_size_bytes * 100 / total_gb).toFixed(2)} % used)</p><progress id="file-list-storage-stockage-progress" max="${total_gb}" value="${total_files_size_bytes}">`
     storage_display.innerHTML = dom;
 }
 
