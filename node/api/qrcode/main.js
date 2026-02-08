@@ -2,8 +2,8 @@ const QRCode = require('qrcode');
 const { Router } = require("express");
 const router = Router();
 
-router.post("/", async (req, res) => {
-    const { url, keep_file } = req.body;
+router.get("/:url", async (req, res) => {
+    const { url } = req.params;
     try {
         const result = await genQRCode(url);
         return res.status(200).type("image/png").send(result);

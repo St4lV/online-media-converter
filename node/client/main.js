@@ -1,7 +1,6 @@
 const footer_version_display = document.querySelector("#footer-version-display")
 
 const go_button = document.querySelector("#start-process");
-const select_action = document.querySelector("#select-process");
 const input_url = document.querySelector("#url-input");
 const action_options_display = document.querySelector("#action-options-display");
 
@@ -120,7 +119,8 @@ async function updateActionBarOptions(mode){
             break
 
         case "qrcode":
-            reset();
+			actionModeQRCode();
+			setActionBarStep(1);
             break
         
         case "none" :
@@ -174,15 +174,11 @@ function actionModeDownload(){
     const next_btn = document.querySelector("#action-bar-v2-options-dl-btn-next-holder");
 
     start_fetch_btn.addEventListener("click",async function(){
-        next_btn.innerHTML=`<span class="loader"></span>`;
+        setNextBtnLoading();
         const result = await fetchAvailableFormats();
 
         if (result.status!==200){
-            next_btn.innerHTML=`<center><button id="action-bar-v2-options-select-format-dl-retry">Retry</button></center><br>Error : ${result.data}`;
-            const retry_btn = document.querySelector("#action-bar-v2-options-select-format-dl-retry");
-            retry_btn.addEventListener("click", async function(){
-                await updateActionBarOptions("download");
-            })
+            setNextBtnReject();
             return
         }
 
@@ -196,15 +192,51 @@ function actionModeDownload(){
         }
 
         available_formats_select.innerHTML=dom;
-        next_btn.innerHTML=svgs.check;
+        setNextBtnValid();
         const btn_dl_holder = document.querySelector("#action-bar-v2-options-btn-download-holder")
         const btn_dl = document.querySelector("#action-bar-v2-options-btn-download");
         btn_dl.addEventListener("click",async function() {
-            btn_dl_holder.innerHTML='<span class="loader"></span>';
-            await downloadFile();
-            updateActionBarOptions("none");
+			setLoading();
+            const result = await downloadFile();
+			if (result.status!==200){
+				setReject();
+				return
+			}
+			setValid();
+			setTimeout(()=>{
+				updateActionBarOptions("none");
+			},2000)
+            
+
+			function setValid() {
+				btn_dl_holder.innerHTML = `${svgs.check}`;
+			}
+
+			function setLoading() {
+				btn_dl_holder.innerHTML = '<span class="loader"></span>';
+			}
+
+			function setReject() {
+				btn_dl_holder.innerHTML = `${svgs.cross}`;
+			}
         });
         setActionBarStep(2);
+
+		function setNextBtnValid() {
+			next_btn.innerHTML = `${svgs.check}`;
+		}
+
+		function setNextBtnLoading() {
+			next_btn.innerHTML = '<span class="loader"></span>';
+		}
+
+		function setNextBtnReject() {
+			next_btn.innerHTML = `${svgs.cross}<br><center><button id="action-bar-v2-options-select-format-dl-retry">Retry</button></center><br>Error : ${result.data}`;
+			const retry_btn = document.querySelector("#action-bar-v2-options-select-format-dl-retry");
+			retry_btn.addEventListener("click", async function () {
+				await updateActionBarOptions("download");
+			})
+		}
     })
     
     async function fetchAvailableFormats(){
@@ -220,13 +252,11 @@ function actionModeDownload(){
 
         const audio_only = !(available_formats_select.value === "mp4");
         const result = await startDownload(clearUrl(url_input.value),available_formats_select.value,"best",audio_only);
-        //console.log(result);
+		return result
+		//console.log(result);
     }
 
-    function clearUrl(url){
-        const result = ((url.split("?si=")[0]).split("&si=")[0]).split("&list=")[0];
-        return result;
-    }
+    
     
 }
 
@@ -333,7 +363,8 @@ async function actionModeConvert(){
 
     async function setupActionMode(value){
         next_btn_holder.innerHTML=`<span class="loader"></span>`
-         switch (value){
+        setActionBarStep(1);
+        switch (value){
             // Download from url and convert
             case "dl":
                 options_holder.innerHTML=`<input id="action-bar-v2-options-convert-url-input" placeholder="URL" type="text">`;
@@ -526,11 +557,92 @@ async function actionModeConvert(){
         const result = await postRequest(endpoint, body);
         return result;
     }
+}
 
-    function clearUrl(url){
-        const result = ((url.split("?si=")[0]).split("&si=")[0]).split("&list=")[0];
-        return result;
-    }
+async function actionModeQRCode(){
+	/* ID template = id="action-bar-v2-options-qrcode" */
+	const dom_init = `
+<menu id ="action-bar-v2-options-qrcode-holder">
+    <div id ="action-bar-v2-options-qrcode-step-1">
+		<input type="text" id="action-bar-v2-options-qrcode-input-url" placeholder="URL">
+		<div id="action-bar-v2-options-qrcode-button-start-holder">
+			<button id="action-bar-v2-options-qrcode-button-start">Convert to QR Code</button>
+		</div>
+	</div>
+    <div id ="action-bar-v2-options-qrcode-step-2">
+        <div id="action-bar-v2-options-qrcode-img-holder">
+		</div>
+		<div>
+			<div>
+				<button id="action-bar-v2-options-qrcode-button-save">Save on server</button>
+			</div>
+			<div>
+				<a href="" download>Download</a>
+			</div>
+		</div>
+    </div>
+</menu>
+`;
+	action_bar_v2_options.innerHTML = dom_init;
+
+	const url_input = document.querySelector("#action-bar-v2-options-qrcode-input-url");
+	const qrcode_img_holder = document.querySelector("#action-bar-v2-options-qrcode-img-holder");
+	const next_btn_holder = document.querySelector("#action-bar-v2-options-qrcode-button-start-holder");
+	const next_btn = document.querySelector("#action-bar-v2-options-qrcode-button-start");
+
+	next_btn.addEventListener("click",async function() {
+		await nextButton();
+	});
+
+	async function nextButton(){
+
+		if (url_input.value ===""){
+			return
+		}
+
+		setLoading();
+		const result = await generateQRCode(encodeURIComponent(clearUrl(url_input.value)));
+		if (result.status!==200){
+			setReject();
+			return
+		}
+
+		setValid();
+		setActionBarStep(2)
+
+		function setLoading(){
+			next_btn_holder.innerHTML='<span class="loader"></span>'
+		}
+
+		function setValid(){
+			next_btn_holder.innerHTML = svgs.check
+		}
+
+		function setReject(){
+			next_btn_holder.innerHTML = svgs.cross
+		}
+	}
+
+	async function generateQRCode(link){
+		const url = '/api/v1/qrcode/' + link;
+		const result = await getImgRequest(url);
+		if (result.status!==200){
+			return result;
+		}
+
+		const img_dom = `<img src="${url}" id="action-bar-v2-options-qrcode-img-display">`
+		qrcode_img_holder.innerHTML = img_dom;
+		return result;
+	}
+
+	async function saveQRCode(name) {
+		
+	}
+}
+
+function clearUrl(url) {
+	const result = ((url.split("?si=")[0]).split("&si=")[0]).split("&list=")[0];
+	return result;
 }
 
 // HTTP REQUESTS FUNCTIONs
@@ -541,6 +653,19 @@ async function getRequest(url) {
     const code = response.status;
     //console.log({status:code,data:data.data});
     return {status:code,data:data.data};
+}
+
+async function getImgRequest(url) {
+	const response = await fetch(url);
+	const contentType = response.headers.get('Content-Type');
+
+	if (contentType && contentType.startsWith('image/')) {
+		const blob = await response.blob();
+		return { status: response.status, data: blob};
+	}
+
+	const data = await response.json();
+	return { status: response.status, data: data.data};
 }
 
 async function postRequest(url, body) {
@@ -597,14 +722,11 @@ async function startDownload(url, format, quality, audio_only) {
     //console.log(result)
 }
 
-async function startQRCode(url, keep_file) {
-    const body = {
-        url: url,
-        keep_file: keep_file
-    };
-    const endpoint = '/api/v1/qrcode'
+async function startQRCode(url) {
+    const endpoint = '/api/v1/qrcode/'+encodeURIComponent(url)
     const result = await postRequest(endpoint, body);
-    //console.log(result)
+    return result
+	//console.log(result)
 }
 
 //FILES
@@ -668,40 +790,69 @@ async function assignDelBtns() {
     }
 }
 
-select_action.addEventListener("change", async function() {
-    await setActionsDisplay()
-})
-
-async function setActionsDisplay() {
-    action_options_display.innerHTML = "";
-    switch (select_action.value) {
-
-        case "download":
-            await setActionsDisplayDownloadFormats();
-            break;
-
-        case "convert":
-            await setActionsDisplayConvert();
-            break;
-
-        case "qrcode":
-            await setActionsDisplayQRCode();
-            break;
-    }
-}
-
-async function setActionsDisplayDownloadFormats() {
-    let dom = `<select id="select-download-format"><option value="mp4">MP4</option><option value="mp3">MP3</option></select>`
-    action_options_display.innerHTML = dom;
-}
-
-async function setActionsDisplayConvert() {
-    let dom = '<input type="file" id="input-file-convert">' + '<select id="select-convert-format"><option value="mp4">MP4</option><option value="mp3">MP3</option><option value="png">PNG</option></select>'
-    action_options_display.innerHTML = dom;
+class GlobalData {
 
 }
 
-async function setActionsDisplayQRCode() {
-    let dom = ''
-    action_options_display.innerHTML = dom;
+class Reload {
+	constructor(data_object = new GlobalData()){
+		this.g_data=data_object;
+	}
+
+	async all(){
+
+	}
+	
+	async files(){
+
+	}
+
+	async appData(){
+		
+	}
+
+
+}
+
+class HTTPRequest {
+	constructor(url,method){
+		this.url=encodeURIComponent(url);
+		this.method=method;
+	}
+
+	async get(){
+
+	}
+
+	async put(body={}){
+
+	}
+
+	async post(body={}){
+
+	}
+
+	async postFile(file){
+
+	}
+
+	async delete(){
+
+	}
+}
+
+class ActionMenu {
+
+}
+
+class Download {
+
+}
+
+class Convert {
+
+}
+
+class QRCode {
+
 }

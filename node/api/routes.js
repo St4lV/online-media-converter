@@ -12,11 +12,11 @@ router.use(`/download`, download_routes);
 const files_routes = require("./files/main");
 
 router.use(`/files`, files_routes);
-/*
+
 const qrcode_routes = require("./qrcode/main");
 
 router.use(`/qrcode`, qrcode_routes);
-*/
+
 
 router.get('/',async(req,res)=>{
     const pjson = require('../package.json');
