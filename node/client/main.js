@@ -198,7 +198,7 @@ function actionModeDownload(){
         btn_dl.addEventListener("click",async function() {
 			setLoading();
             const result = await downloadFile();
-			if (result.status!==200){
+			if (result.status!==201){
 				setReject();
 				return
 			}
