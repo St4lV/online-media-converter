@@ -1,68 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Online Media Converter</title>
-    <link rel="stylesheet" href="/styles.css">
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Online Media Converter</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link
+		href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap"
+		rel="stylesheet">
+	<link rel="stylesheet" href="/styles.css">
 </head>
+
 <body>
-    <header>
-        <div class="flex">
-            <svg id="header-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-in-down" viewBox="0 0 16 16">
-                <path fill-rule="evenodd" d="M3.5 6a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-8a.5.5 0 0 0-.5-.5h-2a.5.5 0 0 1 0-1h2A1.5 1.5 0 0 1 14 6.5v8a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 14.5v-8A1.5 1.5 0 0 1 3.5 5h2a.5.5 0 0 1 0 1z"/>
-                <path fill-rule="evenodd" d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
-            </svg>
-            <h1>Online Media Converter</h1>
-        </div>
-        <nav id="action-bar-v2-choice">
-                <hr>
-                <h2 class="clickable-element" id="action-bar-v2-choice-download">Download</h2>
-                <hr>
-                <h2 class="clickable-element" id="action-bar-v2-choice-convert">Convert</h2>
-                <hr>
-                <h2 class="clickable-element" id="action-bar-v2-choice-qrcode">QR Code</h2>
-                <hr>
-        </nav>
-        <hr>
-    </header>
-    <main>
-        <section id="action-bar-v2">
-            
-            <div id="action-bar-v2-options" data-step="0">
-                
-            </div>
-        </section>
-        <section id="section-files-list">
-            <div id="files-list-storage">
 
-            </div>
-            <table id="files-list-table">
-                <thead>
-                    <tr id="files-list-thead-tr">
-                        <th scope="col">File</th>
-                        <th scope="col">Size</th>
-                        <th scope="col">Options</th>
-                    </tr>
-                </thead>
-                <tbody id="files-list">
+	<header>
+		<div class="header-inner">
+			<div class="header-left">
+				<div class="header-logo">
+					<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor"
+						viewBox="0 0 16 16">
+						<path fill-rule="evenodd"
+							d="M3.5 6a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-8a.5.5 0 0 0-.5-.5h-2a.5.5 0 0 1 0-1h2A1.5 1.5 0 0 1 14 6.5v8a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 14.5v-8A1.5 1.5 0 0 1 3.5 5h2a.5.5 0 0 1 0 1z" />
+						<path fill-rule="evenodd"
+							d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z" />
+					</svg>
+				</div>
+				<h1>Media Converter</h1>
+			</div>
+			<nav id="action-bar-v2-choice">
+				<button class="nav-pill clickable-element" id="action-bar-v2-choice-download">
+					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+						viewBox="0 0 16 16">
+						<path
+							d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5" />
+						<path
+							d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z" />
+					</svg>
+					Download
+				</button>
+				<button class="nav-pill clickable-element" id="action-bar-v2-choice-convert">
+					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+						viewBox="0 0 16 16">
+						<path fill-rule="evenodd"
+							d="M0 3.5A.5.5 0 0 1 .5 3H1c2.202 0 3.827 1.24 4.874 2.418.49.552.865 1.102 1.126 1.532.26-.43.636-.98 1.126-1.532C9.173 4.24 10.798 3 13 3v1c-1.798 0-3.173 1.01-4.126 2.082A9.6 9.6 0 0 0 7.556 8a9.6 9.6 0 0 0 1.318 1.918C9.827 10.99 11.202 12 13 12v1c-2.202 0-3.827-1.24-4.874-2.418A10.6 10.6 0 0 1 7 9.05c-.26.43-.636.98-1.126 1.532C4.827 11.76 3.202 13 1 13H.5a.5.5 0 0 1 0-1H1c1.798 0 3.173-1.01 4.126-2.082A9.6 9.6 0 0 0 6.444 8a9.6 9.6 0 0 0-1.318-1.918C4.173 5.01 2.798 4 1 4H.5a.5.5 0 0 1-.5-.5" />
+						<path
+							d="M13 5.466V1.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192m0 8V9.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192" />
+					</svg>
+					Convert
+				</button>
+				<button class="nav-pill clickable-element" id="action-bar-v2-choice-qrcode">
+					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+						viewBox="0 0 16 16">
+						<path
+							d="M0 .5A.5.5 0 0 1 .5 0h3a.5.5 0 0 1 0 1H1v2.5a.5.5 0 0 1-1 0zm12 0a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0V1h-2.5a.5.5 0 0 1-.5-.5M.5 12a.5.5 0 0 1 .5.5V15h2.5a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5v-3a.5.5 0 0 1 .5-.5m15 0a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1 0-1H15v-2.5a.5.5 0 0 1 .5-.5M4 4h1v1H4zm2 0h1v1H6zm2 0h1v1H8zm0 2h1v1H8zm-2 2h1v1H6zm2 0h1v1H8zm2-4h1v1h-1zm0 2h1v1h-1zM4 8h1v1H4z" />
+					</svg>
+					QR Code
+				</button>
+			</nav>
+		</div>
+	</header>
 
-                </tbody>
-            </table>
-        </section>
-    </main>
-    <footer>
-        <div class="flex">
-            <ul>
-                
-            </ul>
-            <hr>
-            <ul>
+	<main>
+		<section id="action-bar-v2">
+			<div id="action-bar-v2-options" data-step="0"></div>
+		</section>
 
-            </ul>
-        </div>
-        <p id="footer-version-display"></p>
-    </footer>
-    <script src="/main.js"></script>
+		<section id="section-files-list">
+			<div class="files-section-header">
+				<h2>Your files</h2>
+				<div id="files-list-storage"></div>
+			</div>
+			<div class="table-wrapper">
+				<table id="files-list-table">
+					<thead>
+						<tr id="files-list-thead-tr">
+							<th scope="col">File</th>
+							<th scope="col">Size</th>
+							<th scope="col">Options</th>
+						</tr>
+					</thead>
+					<tbody id="files-list"></tbody>
+				</table>
+			</div>
+		</section>
+	</main>
+
+	<footer>
+		<p id="footer-version-display"></p>
+	</footer>
+
+	<script src="/main.js"></script>
 </body>
+
 </html>

@@ -1,5 +1,7 @@
 
 const pjson = require('../../package.json');
+const subProcess = require('child_process');
+
 class SSHCommand {
 
     constructor (c){
@@ -8,7 +10,6 @@ class SSHCommand {
 
     async execute(){
         return new Promise((resolve, reject) => {
-            const subProcess = require('child_process');
             subProcess.exec(this.command, (err, stdout, stderr) => {
                 if (err) {
                     console.error(`[${pjson.name}@${pjson.version}] ${err}`);

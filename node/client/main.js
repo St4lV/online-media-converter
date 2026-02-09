@@ -1,858 +1,764 @@
-const footer_version_display = document.querySelector("#footer-version-display")
+// ─── Utility helpers ──────────────────────────────────
 
-const go_button = document.querySelector("#start-process");
-const input_url = document.querySelector("#url-input");
-const action_options_display = document.querySelector("#action-options-display");
+const SVGS = {
+	cross: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/></svg>`,
+	dl: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/></svg>`,
+	check: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-check2-circle" viewBox="0 0 16 16"><path d="M2.5 8a5.5 5.5 0 0 1 8.25-4.764.5.5 0 0 0 .5-.866A6.5 6.5 0 1 0 14.5 8a.5.5 0 0 0-1 0 5.5 5.5 0 1 1-11 0"/><path d="M15.354 3.354a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0z"/></svg>`,
+};
 
-const action_bar_v2_options = document.querySelector("#action-bar-v2-options");
-
-const svgs = {
-    cross:`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/></svg>`,
-    dl:`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/></svg>`,
-    check:`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-check2-circle" viewBox="0 0 16 16"><path d="M2.5 8a5.5 5.5 0 0 1 8.25-4.764.5.5 0 0 0 .5-.866A6.5 6.5 0 1 0 14.5 8a.5.5 0 0 0-1 0 5.5 5.5 0 1 1-11 0"/><path d="M15.354 3.354a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0z"/></svg>`,
-}
-
-let intervalId = null;
-let graceReloadUntil = 0;
-const grace_period_ms = 10_000;
-let files_list = []
-
-async function refreshPage() {
-    await reloadFilesList();
-    await assignDelBtns();
-    await updateStorageData();
-    await updateAppData();
-}
-
-function loadFromCache(){
-
-}
-
-(async () => {
-    loadFromCache();
-    await refreshPage();
-})()
-
-function startAutoReload() {
-    if (intervalId !== null) {
-        return;
-    }
-    graceReloadUntil = Date.now() + grace_period_ms;
-    // Adapted from :
-    // https://developer.mozilla.org/en-US/docs/Web/API/Window/setInterval#example_2_alternating_two_colors
-    intervalId = setInterval(async function() {
-        await refreshPage();
-        //console.log("auto reload")
-    }, 1000);
-}
-
-function stopAutoReload() {
-    if (intervalId !== null) {
-        clearInterval(intervalId);
-        intervalId = null;
-    }
-}
-
-async function updateAppData() {
-    const app = await getRequest("/api/v1/");
-    footer_version_display.innerText = `Made by ${app.data.dev} under ${app.data.license} License.\n${app.data.app}@${app.data.version}`;/*${new Date().getFullYear()}*/
-}
-let total_files_size_bytes =0;
-let total_files_count =0;
-async function updateStorageData() {
-    const storage_display = document.querySelector("#files-list-storage");
-    const storage = await getRequest("/api/v1/files/storage")
-
-    const bsize = storage.data.bsize;
-    const bavail = storage.data.bavail;
-    const blocks = storage.data.blocks;
-    const total_available_size_bytes =  bsize * bavail;
-    const total_gb = blocks * bsize
-    let dom = `<p>${total_files_count} files - ${formatSize(total_files_size_bytes)} / ${formatSize(total_gb)} (${formatSize(total_available_size_bytes)} available - ${(total_files_size_bytes * 100 / total_gb).toFixed(2)} % used)</p><progress id="file-list-storage-stockage-progress" max="${total_gb}" value="${total_files_size_bytes}">`
-    storage_display.innerHTML = dom;
+function clearUrl(url) {
+	return ((url.split("?si=")[0]).split("&si=")[0]).split("&list=")[0];
 }
 
 function formatSize(bytes) {
-    if (bytes === 0) return '0 o';
-    
-    const units = ['o', 'Ko', 'Mo', 'Go', 'To'];
-    const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    const size = bytes / Math.pow(1024, i);
-    
-    return (size % 1 === 0 ? size.toString() : size.toFixed(2).replace('.', ',')) + ' ' + units[i];
-}
-// ACTION BAR V2
-
-
-// Selectors events
-const abv2_selectors_download = document.querySelector("#action-bar-v2-choice-download");
-abv2_selectors_download.addEventListener("click",async function(){
-    await updateActionBarOptions("download");
-})
-const abv2_selectors_convert = document.querySelector("#action-bar-v2-choice-convert");
-abv2_selectors_convert.addEventListener("click",async function(){
-    await updateActionBarOptions("convert");
-})
-const abv2_selectors_qrcode = document.querySelector("#action-bar-v2-choice-qrcode");
-abv2_selectors_qrcode.addEventListener("click",async function(){
-    await updateActionBarOptions("qrcode");
-})
-
-// Display action bar
-
-const abv2_actions_holder_el = document.querySelector("#action-bar-v2-options");
-let action_bar_step = 0;
-let action_bar_max_step = 3;
-let action_bar_mode = "none";
-
-async function updateActionBarOptions(mode){
-
-    switch (mode) {
-        case "download":
-            actionModeDownload()
-            setActionBarStep(1);
-            break
-
-        case "convert":
-            actionModeConvert();
-            setActionBarStep(1);
-            break
-
-        case "qrcode":
-			actionModeQRCode();
-			setActionBarStep(1);
-            break
-        
-        case "none" :
-            reset();            
-            return
-
-        case "" :
-            reset();
-            return
-    }
-
-    function reset(){
-        setActionBarStep(0);
-        setTimeout(() => {
-            abv2_actions_holder_el.innerHTML="";
-        }, "300");
-    }
+	if (bytes === 0) return '0 o';
+	const units = ['o', 'Ko', 'Mo', 'Go', 'To'];
+	const i = Math.floor(Math.log(bytes) / Math.log(1024));
+	const size = bytes / Math.pow(1024, i);
+	return (size % 1 === 0 ? size.toString() : size.toFixed(2).replace('.', ',')) + ' ' + units[i];
 }
 
-function setActionBarStep(step=0){
-    abv2_actions_holder_el.dataset.step=step;
-}
-
-// Display action bar mode :
-
-function actionModeDownload(){
-    const dom_init = `
-<menu id ="action-bar-v2-options-dl-holder">
-    <div id="action-bar-v2-options-input-url-holder" class="action-bar-v2-options-step">
-        <h3>Media URL :</h3>
-        <input type="text" id="action-bar-v2-options-input-url" class="action-bar-v2-options-input-url" placeholder="URL">
-        <p id="action-bar-v2-options-dl-btn-next-holder">
-            <button id="action-bar-v2-options-url-start-fetch-format">Next</button>
-        </p>
-    </div>
-    <div id="action-bar-v2-options-select-and-btn" class="action-bar-v2-options-step">
-        <select id="action-bar-v2-options-select-format-dl">
-            <option value="none" selected disabled>Dynamic fetch</option>
-        </select>
-        <div id="action-bar-v2-options-btn-download-holder">
-            <button id="action-bar-v2-options-btn-download">Download</button>
-        </div>
-    </div>
-</menu>
-`;
-    action_bar_v2_options.innerHTML = dom_init;
-    
-    const url_input = document.querySelector("#action-bar-v2-options-input-url");
-    const start_fetch_btn = document.querySelector("#action-bar-v2-options-url-start-fetch-format");
-    const available_formats_select = document.querySelector("#action-bar-v2-options-select-format-dl");
-    const next_btn = document.querySelector("#action-bar-v2-options-dl-btn-next-holder");
-
-    start_fetch_btn.addEventListener("click",async function(){
-        setNextBtnLoading();
-        const result = await fetchAvailableFormats();
-
-        if (result.status!==200){
-            setNextBtnReject();
-            return
-        }
-
-        const formats_list = result.data.formats;
-        let dom = "";
-
-        for (let el of formats_list){
-            if (!dom.includes(`value="${el.ext}"`)){
-                dom += `<option value="${el.ext}" ${(el.ext === "mp3" || el.ext === "mp4") ? "selected" : ""}>${el.ext}</option>`
-            }
-        }
-
-        available_formats_select.innerHTML=dom;
-        setNextBtnValid();
-        const btn_dl_holder = document.querySelector("#action-bar-v2-options-btn-download-holder")
-        const btn_dl = document.querySelector("#action-bar-v2-options-btn-download");
-        btn_dl.addEventListener("click",async function() {
-			setLoading();
-            const result = await downloadFile();
-			if (result.status!==201){
-				setReject();
-				return
-			}
-			setValid();
-			setTimeout(()=>{
-				updateActionBarOptions("none");
-			},2000)
-            
-
-			function setValid() {
-				btn_dl_holder.innerHTML = `${svgs.check}`;
-			}
-
-			function setLoading() {
-				btn_dl_holder.innerHTML = '<span class="loader"></span>';
-			}
-
-			function setReject() {
-				btn_dl_holder.innerHTML = `${svgs.cross}`;
-			}
-        });
-        setActionBarStep(2);
-
-		function setNextBtnValid() {
-			next_btn.innerHTML = `${svgs.check}`;
-		}
-
-		function setNextBtnLoading() {
-			next_btn.innerHTML = '<span class="loader"></span>';
-		}
-
-		function setNextBtnReject() {
-			next_btn.innerHTML = `${svgs.cross}<br><center><button id="action-bar-v2-options-select-format-dl-retry">Retry</button></center><br>Error : ${result.data}`;
-			const retry_btn = document.querySelector("#action-bar-v2-options-select-format-dl-retry");
-			retry_btn.addEventListener("click", async function () {
-				await updateActionBarOptions("download");
-			})
-		}
-    })
-    
-    async function fetchAvailableFormats(){
-        const result = await getRequest(`/api/v1/download/${encodeURIComponent(clearUrl(url_input.value))}`);
-        return result;
-    }
-
-    async function downloadFile() {
-
-        graceReloadUntil = Date.now() + grace_period_ms;
-        await refreshPage();
-        startAutoReload();
-
-        const audio_only = !(available_formats_select.value === "mp4");
-        const result = await startDownload(clearUrl(url_input.value),available_formats_select.value,"best",audio_only);
-		return result
-		//console.log(result);
-    }
-
-    
-    
-}
-
-async function actionModeConvert(){
-/* ID template = id="action-bar-v2-options-convert" */
-    const dom_init = `
-<menu id ="action-bar-v2-options-convert-holder">
-    <div id ="action-bar-v2-options-convert-step-1">
-        <select id ="action-bar-v2-options-convert-input-select-options">
-            <option value="dl">Download file</option>
-            <option value="upl">Upload file</option>
-            <option value="srv" selected>From server</option>
-        </select>
-        <div id ="action-bar-v2-options-convert-input-options-holder">
-            <select id="action-bar-v2-options-convert-file-select">
-                <option value="none" selected disabled>None</option>
-            </select>
-        </div>
-        <div id ="action-bar-v2-options-next-btn-holder">
-            <button id="action-bar-v2-options-next-btn">Next</button>
-        </div>
-    </div>
-    <div id ="action-bar-v2-options-convert-step-2">
-        <select = id="action-bar-v2-options-convert-select-convert-format">
-            <option value="none" selected disabled>None</option>
-        </select>
-        <div id="action-bar-v2-options-convert-button-start-convert-holder">
-            <button id="action-bar-v2-options-convert-button-start-convert">Convert</button>
-        </div>
-    </div>
-</menu>
-`;
-    action_bar_v2_options.innerHTML = dom_init;
-
-    const options_select = document.querySelector("#action-bar-v2-options-convert-input-select-options");
-    const options_holder = document.querySelector("#action-bar-v2-options-convert-input-options-holder");
-    const next_btn_holder = document.querySelector("#action-bar-v2-options-next-btn-holder");
-    const select_convert_format = document.querySelector("#action-bar-v2-options-convert-select-convert-format");
-    const start_convert_btn_holder = document.querySelector("#action-bar-v2-options-convert-button-start-convert-holder");
-    const start_convert_btn = document.querySelector("#action-bar-v2-options-convert-button-start-convert");
-
-
-    let convert_action_mode = "srv";
-    let file_name = "none";
-    let new_format = "none";
-
-    await setupActionMode(convert_action_mode);
-    await setupAvailableConvertFormatsSelect();
-
-    options_select.addEventListener("change",async function(){
-       await setupActionMode(this.value)
-    });
-
-    start_convert_btn.addEventListener("click",async function () {
-        setLoading();
-       
-        const cleaned_format = select_convert_format.value.split(".");
-        new_format = cleaned_format[cleaned_format.length-1];
-
-        const result = await startConvert();
-
-        if (result.status!==200){
-            setReject();
-            return
-        }
-        
-        const del_result = await deleteRequest(`/api/v1/files/${encodeURIComponent(file_name)}`);
-
-        if (del_result.status!==200){
-            setReject();
-            return
-        }
-
-        setValid();
-        await refreshPage();
-        updateActionBarOptions("none");
-
-        function setLoading(){
-            start_convert_btn_holder.innerHTML=`<span class="loader"></span>`;
-        }
-
-        function setValid(){
-            start_convert_btn_holder.innerHTML=`${svgs.check}`;
-        }
-
-        function setReject(){
-            start_convert_btn_holder.innerHTML=`${svgs.cross}`;
-        }
-    })
-
-    async function setupAvailableConvertFormatsSelect(){
-
-        let dom ="";
-        const format_list = await getConvertFormats();
-        const last_selected_format = localStorage.getItem("last_convert_format");
-
-        for (let el of format_list){
-            const selected = last_selected_format === el ? "selected" : "";
-            dom+=`<option value=${el} ${selected} >${el}</option>`
-        }
-
-        select_convert_format.innerHTML=dom;
-    }
-
-    async function setupActionMode(value){
-        next_btn_holder.innerHTML=`<span class="loader"></span>`
-        setActionBarStep(1);
-        switch (value){
-            // Download from url and convert
-            case "dl":
-                options_holder.innerHTML=`<input id="action-bar-v2-options-convert-url-input" placeholder="URL" type="text">`;
-                break;
-            // Upload from client and convert
-            case "upl":
-                options_holder.innerHTML=`<input id="action-bar-v2-options-convert-file-input" type="file">`;
-                break;
-            // Get file on server and convert
-            case "srv":
-                options_holder.innerHTML=`<select id="action-bar-v2-options-convert-file-select"><option selected disabled>None</option></select>`;
-                await populateFilelistSelect();
-                break;
-            case "":
-                return;
-        };
-        convert_action_mode=value;
-        next_btn_holder.innerHTML=`<button id="action-bar-v2-options-next-btn">Next</button>`;
-        next_btn_holder.innerHTML=`<button id="action-bar-v2-options-next-btn">Next</button>`;
-        const next_btn_step_1 = document.querySelector("#action-bar-v2-options-next-btn");
-        next_btn_step_1.addEventListener("click", async function() {
-            await nextButtonAction();
-        })
-    }
-
-    async function nextButtonAction(){
-        function setLoading(){
-            next_btn_holder.innerHTML=`<span class="loader"></span>`;
-        }
-
-        function setValid(){
-            next_btn_holder.innerHTML=`${svgs.check}`;
-        }
-
-        function setReject(){
-            next_btn_holder.innerHTML=`${svgs.cross}`;
-        }
-
-        switch (convert_action_mode){
-            case "dl":
-                const url_input_element = document.querySelector("#action-bar-v2-options-convert-url-input");
-                if (url_input_element.value===""){
-                    return;
-                }
-                setLoading();
-
-                const formats_data = await fetchAvailableFormats();
-
-                if (formats_data.status!==200){
-                    setReject();
-                    return;
-                }
-
-                const formats_list = formats_data.data.formats;
-                let mp3_or_mp4_selected = false;
-
-                let dl_format = "none";
-                for (let el of formats_list){
-                    if (!mp3_or_mp4_selected){
-                        if (el.ext === "mp3" || el.ext === "mp4"){
-                            dl_format = el.ext;
-                            mp3_or_mp4_selected=true
-                        }
-                    }
-                }
-
-                if (dl_format==="none"){
-                    setReject();
-                    return;
-                }
-                const downloaded = await downloadFile()
-
-                if (downloaded.status!==201){
-                    console.error("Convert handler - Error downloading file : ",downloaded.data)
-                }
-
-                await refreshPage();
-                const media_id = formats_data.data.mediaId
-                for (let el of files_list.data){
-                    if (el.name.includes(`[${media_id}]`)){
-                        file_name = el.name;
-                    }
-                }
-                if (file_name==="none"){
-                    setReject();
-                    return;
-                }
-
-                setValid();
-                // -> Next step 
-                //---------------
-
-                async function fetchAvailableFormats(){
-                    const result = await getRequest(`/api/v1/download/${encodeURIComponent(clearUrl(url_input_element.value))}`);
-                    return result;
-                }
-
-                async function downloadFile() {
-
-                    graceReloadUntil = Date.now() + grace_period_ms;
-                    await refreshPage();
-                    startAutoReload();
-
-                    const audio_only = !(dl_format === "mp4");
-                    const result = await startDownload(clearUrl(url_input_element.value),dl_format,"best",audio_only);
-                    //console.log(result);
-                    return result;
-                }
-
-                break;
-            
-            case "upl":
-                const file_input_element = document.querySelector("#action-bar-v2-options-convert-file-input");
-                if (file_input_element.files.length===0){
-                    setReject();
-                    return
-                }
-                setLoading();
-                for (let i of file_input_element.files) {
-                    //console.log(i)
-                    const formData = new FormData();
-                    formData.append('file', i);
-                    const upload_endpoint = '/api/v1/files';
-                    const upload_result = await postRequestFile(upload_endpoint, formData);
-                    if (upload_result.status !== 201) {
-                        setReject();
-                        return
-                    }
-                    file_name = i.name
-                    await refreshPage();
-                }
-                setValid();
-                
-                //console.log(result)
-                break;
-            case "srv":
-                const select_file_from_server = document.querySelector("#action-bar-v2-options-convert-file-select");
-                if (select_file_from_server.value==="none"){
-                    return
-                }
-                setLoading();
-                file_name=select_file_from_server.value
-                setValid();
-                break;
-            case "":
-                setReject();
-                return;
-            
-        }
-
-        setActionBarStep(2);
-    }
-
-    async function populateFilelistSelect(){
-        
-        const files_select_element = document.querySelector("#action-bar-v2-options-convert-file-select");
-        await getFiles();
-        let dom = "";
-        for (let el of files_list.data){
-            dom+=`<option value="${el.name}">${el.name}</option>`
-        }
-        files_select_element.innerHTML=dom;
-    }
-
-    async function getConvertFormats(){
-        list = [
-            ".webp",
-            ".mp3",
-            ".mp4",
-            ".png",
-            ".jpg",
-            ".ogg",
-            ".aiff",
-            ".mov",
-            ".wav",
-            ".flac",
-            ".gif",
-        ];
-        return list;
-    }
-
-    async function startConvert(){
-        const last_selected = select_convert_format.value;
-        localStorage.setItem("last_convert_format",last_selected);
-        const body = {
-            file_name: file_name,
-            new_format: new_format
-        };
-        const endpoint = '/api/v1/convert'
-        const result = await postRequest(endpoint, body);
-        return result;
-    }
-}
-
-async function actionModeQRCode(){
-	/* ID template = id="action-bar-v2-options-qrcode" */
-	const dom_init = `
-<menu id ="action-bar-v2-options-qrcode-holder">
-    <div id ="action-bar-v2-options-qrcode-step-1">
-		<input type="text" id="action-bar-v2-options-qrcode-input-url" placeholder="URL">
-		<div id="action-bar-v2-options-qrcode-button-start-holder">
-			<button id="action-bar-v2-options-qrcode-button-start">Convert to QR Code</button>
-		</div>
-	</div>
-    <div id ="action-bar-v2-options-qrcode-step-2">
-        <div id="action-bar-v2-options-qrcode-img-holder">
-		</div>
-		<div>
-			<div>
-				<button id="action-bar-v2-options-qrcode-button-save">Save on server</button>
-			</div>
-			<div>
-				<a href="" download>Download</a>
-			</div>
-		</div>
-    </div>
-</menu>
-`;
-	action_bar_v2_options.innerHTML = dom_init;
-
-	const url_input = document.querySelector("#action-bar-v2-options-qrcode-input-url");
-	const qrcode_img_holder = document.querySelector("#action-bar-v2-options-qrcode-img-holder");
-	const next_btn_holder = document.querySelector("#action-bar-v2-options-qrcode-button-start-holder");
-	const next_btn = document.querySelector("#action-bar-v2-options-qrcode-button-start");
-
-	next_btn.addEventListener("click",async function() {
-		await nextButton();
-	});
-
-	async function nextButton(){
-
-		if (url_input.value ===""){
-			return
-		}
-
-		setLoading();
-		const result = await generateQRCode(encodeURIComponent(clearUrl(url_input.value)));
-		if (result.status!==200){
-			setReject();
-			return
-		}
-
-		setValid();
-		setActionBarStep(2)
-
-		function setLoading(){
-			next_btn_holder.innerHTML='<span class="loader"></span>'
-		}
-
-		function setValid(){
-			next_btn_holder.innerHTML = svgs.check
-		}
-
-		function setReject(){
-			next_btn_holder.innerHTML = svgs.cross
-		}
-	}
-
-	async function generateQRCode(link){
-		const url = '/api/v1/qrcode/' + link;
-		const result = await getImgRequest(url);
-		if (result.status!==200){
-			return result;
-		}
-
-		const img_dom = `<img src="${url}" id="action-bar-v2-options-qrcode-img-display">`
-		qrcode_img_holder.innerHTML = img_dom;
-		return result;
-	}
-
-	async function saveQRCode(name) {
-		
-	}
-}
-
-function clearUrl(url) {
-	const result = ((url.split("?si=")[0]).split("&si=")[0]).split("&list=")[0];
-	return result;
-}
-
-// HTTP REQUESTS FUNCTIONs
-
-async function getRequest(url) {
-    const response = await fetch(url)
-    const data = await response.json();
-    const code = response.status;
-    //console.log({status:code,data:data.data});
-    return {status:code,data:data.data};
-}
-
-async function getImgRequest(url) {
-	const response = await fetch(url);
-	const contentType = response.headers.get('Content-Type');
-
-	if (contentType && contentType.startsWith('image/')) {
-		const blob = await response.blob();
-		return { status: response.status, data: blob};
-	}
-
-	const data = await response.json();
-	return { status: response.status, data: data.data};
-}
-
-async function postRequest(url, body) {
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-    });
-    const data = await response.json();
-    const code = response.status;
-    //console.log({status:code,data:data.data});
-    return {status:code,data:data.data};
-}
-
-async function postRequestFile(url, formData) {
-    const response = await fetch(url, {
-        method: 'POST',
-        body: formData
-    });
-
-    const data = await response.json();
-    const code = response.status;
-    //console.log({status:code,data:data.data});
-    return {status:code,data:data.data};
-}
-
-async function deleteRequest(url) {
-    const response = await fetch(url, {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    });
-    const data = await response.json();
-    const code = response.status;
-    //console.log({status:code,data:data.data});
-    return {status:code,data:data.data};
-}
-
-// REQUEST SENDERS
-
-async function startDownload(url, format, quality, audio_only) {
-    const body = {
-        url: url,
-        format: format,
-        quality: quality,
-        audio_only: audio_only,
-    };
-    const endpoint = '/api/v1/download'
-    const result = await postRequest(endpoint, body);
-    return result;
-    //console.log(result)
-}
-
-async function startQRCode(url) {
-    const endpoint = '/api/v1/qrcode/'+encodeURIComponent(url)
-    const result = await postRequest(endpoint, body);
-    return result
-	//console.log(result)
-}
-
-//FILES
-/////////////////////////////////////////////////////////////////////////////
-
-// Helper function to check if a file is temporary (downloading/converting)
 function isTemporaryFile(filename) {
-    return filename.includes(".part") || filename.includes(".tmp") || filename.includes(".temp") || filename.endsWith(".ytdl") ;
+	return filename.includes(".part") || filename.includes(".tmp") || filename.includes(".temp") || filename.endsWith(".ytdl");
 }
 
-async function getFiles() {
-    files_list = await getRequest("/api/v1/files/list");
-}
-
-async function reloadFilesList() {
-    const files_list_tag = document.querySelector("#files-list");
-
-    await getFiles();
-    total_files_size_bytes = 0;
-    total_files_count =0;
-    let dom = "";
-    let hasTemporaryFiles = false;
-
-    for (let el of files_list.data) {
-        total_files_size_bytes+=el.size;
-        // Check for temporary files (.part, .tmp) to track if auto-reload is required
-        if (isTemporaryFile(el.name)) {
-            hasTemporaryFiles = true;
-        }
-
-        // Skip temporary files in the display, as they appear multiple times and kinda spam files list
-        if (!el.name.includes(".part") && !el.name.includes(".tmp") && !el.name.includes(".temp")) {
-            total_files_count++;
-            // If ffmpeg is correctly installed ytdlp generate a ".mp4.ytdl" which i suppose is the file converted to ".mp4" on download end
-            // TLDR: *.ytdl -> file is downloading, else the file is probably ready
-            const ready = (!el.name.endsWith(".ytdl"))
-                ? `<a class="files-list-download-btn" href="/api/v1/files/download/${encodeURIComponent(el.name)}" download>${svgs.dl}</a>`
-                : `<span class="loader"></span>`;
-            dom += `<tr class="files-list-table-filename-tr"><th scope="row">${el.name}</th><td class="files-list-size-display">${formatSize(el.size)}</td><td class="files-list-table-options-btns">${ready}<button data-filename="${el.name}" class="files-list-delete-btn">${svgs.cross}</button></td></tr>`
-        }
-    }
-
-    files_list_tag.innerHTML = dom;
-    const inGracePeriod = Date.now() < graceReloadUntil;
-    //console.log(inGracePeriod)
-    if (hasTemporaryFiles || inGracePeriod) {
-        startAutoReload();
-    } else {
-        stopAutoReload();
-    }
-}
-
-async function assignDelBtns() {
-    const files_list_delete_btn = document.querySelectorAll(".files-list-delete-btn");
-    for (let el of files_list_delete_btn) {
-        el.addEventListener("click", async function() {
-            const file = el.dataset.filename;
-            await deleteRequest(`/api/v1/files/${encodeURIComponent(file)}`)
-            await refreshPage();
-        })
-    }
-}
-
-class GlobalData {
-
-}
-
-class Reload {
-	constructor(data_object = new GlobalData()){
-		this.g_data=data_object;
-	}
-
-	async all(){
-
-	}
-	
-	async files(){
-
-	}
-
-	async appData(){
-		
-	}
-
-
-}
+// ─── HTTPRequest ──────────────────────────────────────
 
 class HTTPRequest {
-	constructor(url,method){
-		this.url=encodeURIComponent(url);
-		this.method=method;
+	constructor(url) {
+		this.url = url;
 	}
 
-	async get(){
-
+	async get() {
+		const response = await fetch(this.url);
+		const data = await response.json();
+		return { status: response.status, data: data.data };
 	}
 
-	async put(body={}){
-
+	async getImage() {
+		const response = await fetch(this.url);
+		const contentType = response.headers.get('Content-Type');
+		if (contentType && contentType.startsWith('image/')) {
+			const blob = await response.blob();
+			return { status: response.status, data: blob };
+		}
+		const data = await response.json();
+		return { status: response.status, data: data.data };
 	}
 
-	async post(body={}){
-
+	async post(body = {}) {
+		const response = await fetch(this.url, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(body),
+		});
+		const data = await response.json();
+		return { status: response.status, data: data.data };
 	}
 
-	async postFile(file){
-
+	async postFile(formData) {
+		const response = await fetch(this.url, {
+			method: 'POST',
+			body: formData,
+		});
+		const data = await response.json();
+		return { status: response.status, data: data.data };
 	}
 
-	async delete(){
+	async delete() {
+		const response = await fetch(this.url, {
+			method: 'DELETE',
+			headers: { 'Content-Type': 'application/json' },
+		});
+		const data = await response.json();
+		return { status: response.status, data: data.data };
+	}
 
+	// Static shortcuts
+	static get(url) { return new HTTPRequest(url).get(); }
+	static getImage(url) { return new HTTPRequest(url).getImage(); }
+	static post(url, body) { return new HTTPRequest(url).post(body); }
+	static postFile(url, formData) { return new HTTPRequest(url).postFile(formData); }
+	static delete(url) { return new HTTPRequest(url).delete(); }
+}
+
+// ─── GlobalData ───────────────────────────────────────
+
+class GlobalData {
+	constructor() {
+		this.filesList = [];
+		this.totalFilesSizeBytes = 0;
+		this.totalFilesCount = 0;
+		this.gracePeriodMs = 10_000;
+		this.graceReloadUntil = 0;
+	}
+
+	resetCounters() {
+		this.totalFilesSizeBytes = 0;
+		this.totalFilesCount = 0;
+	}
+
+	triggerGrace() {
+		this.graceReloadUntil = Date.now() + this.gracePeriodMs;
+	}
+
+	get isInGracePeriod() {
+		return Date.now() < this.graceReloadUntil;
+	}
+
+	async fetchFiles() {
+		const result = await HTTPRequest.get("/api/v1/files/list");
+		this.filesList = result.data || [];
+		return this.filesList;
 	}
 }
+
+// ─── Reload ───────────────────────────────────────────
+
+class Reload {
+	constructor(data) {
+		this.data = data;
+		this.intervalId = null;
+	}
+
+	async all() {
+		await this.files();
+		await this.assignDeleteButtons();
+		await this.storage();
+		await this.appData();
+	}
+
+	async files() {
+		const tbody = document.querySelector("#files-list");
+		await this.data.fetchFiles();
+
+		this.data.resetCounters();
+		let dom = "";
+		let hasTemporary = false;
+
+		for (const file of this.data.filesList) {
+			this.data.totalFilesSizeBytes += file.size;
+
+			if (isTemporaryFile(file.name)) {
+				hasTemporary = true;
+			}
+
+			if (!file.name.includes(".part") && !file.name.includes(".tmp") && !file.name.includes(".temp")) {
+				this.data.totalFilesCount++;
+				const ready = !file.name.endsWith(".ytdl")
+					? `<a class="files-list-download-btn" href="/api/v1/files/download/${encodeURIComponent(file.name)}" download>${SVGS.dl}</a>`
+					: `<span class="loader"></span>`;
+
+				dom += `<tr class="files-list-table-filename-tr">
+                    <th scope="row">${file.name}</th>
+                    <td class="files-list-size-display">${formatSize(file.size)}</td>
+                    <td class="files-list-table-options-btns">
+                        ${ready}
+                        <button data-filename="${file.name}" class="files-list-delete-btn">${SVGS.cross}</button>
+                    </td>
+                </tr>`;
+			}
+		}
+
+		tbody.innerHTML = dom;
+
+		if (hasTemporary || this.data.isInGracePeriod) {
+			this.startAuto();
+		} else {
+			this.stopAuto();
+		}
+	}
+
+	async assignDeleteButtons() {
+		const buttons = document.querySelectorAll(".files-list-delete-btn");
+		for (const btn of buttons) {
+			btn.addEventListener("click", async () => {
+				const filename = btn.dataset.filename;
+				await HTTPRequest.delete(`/api/v1/files/${encodeURIComponent(filename)}`);
+				await this.all();
+			});
+		}
+	}
+
+	async storage() {
+		const container = document.querySelector("#files-list-storage");
+		const result = await HTTPRequest.get("/api/v1/files/storage");
+		const { bsize, bavail, blocks } = result.data;
+
+		const totalAvailable = bsize * bavail;
+		const totalGb = blocks * bsize;
+		const used = this.data.totalFilesSizeBytes;
+		const pct = (used * 100 / totalGb).toFixed(2);
+
+		container.innerHTML = `
+            <p>${this.data.totalFilesCount} files — ${formatSize(used)} / ${formatSize(totalGb)} (${formatSize(totalAvailable)} available — ${pct}% used)</p>
+            <progress id="file-list-storage-stockage-progress" max="${totalGb}" value="${used}"></progress>
+        `;
+	}
+
+	async appData() {
+		const el = document.querySelector("#footer-version-display");
+		const app = await HTTPRequest.get("/api/v1/");
+		el.innerText = `Made by ${app.data.dev} under ${app.data.license} License.\n${app.data.app}@${app.data.version}`;
+	}
+
+	startAuto() {
+		if (this.intervalId !== null) return;
+		this.data.triggerGrace();
+		this.intervalId = setInterval(async () => {
+			await this.all();
+		}, 1000);
+	}
+
+	stopAuto() {
+		if (this.intervalId !== null) {
+			clearInterval(this.intervalId);
+			this.intervalId = null;
+		}
+	}
+}
+
+// ─── ActionMenu ───────────────────────────────────────
 
 class ActionMenu {
+	constructor(data, reload) {
+		this.data = data;
+		this.reload = reload;
+		this.panel = document.querySelector("#action-bar-v2-options");
+		this.currentMode = "none";
 
+		this._bindNavButtons();
+	}
+
+	_bindNavButtons() {
+		const modes = {
+			"#action-bar-v2-choice-download": "download",
+			"#action-bar-v2-choice-convert": "convert",
+			"#action-bar-v2-choice-qrcode": "qrcode",
+		};
+
+		for (const [selector, mode] of Object.entries(modes)) {
+			document.querySelector(selector).addEventListener("click", () => {
+				// Toggle off if clicking same mode
+				if (this.currentMode === mode) {
+					this.close();
+					return;
+				}
+				this.open(mode);
+			});
+		}
+	}
+
+	open(mode) {
+		// Update active pill
+		document.querySelectorAll(".nav-pill").forEach(el => el.classList.remove("active"));
+		const pillMap = {
+			download: "#action-bar-v2-choice-download",
+			convert: "#action-bar-v2-choice-convert",
+			qrcode: "#action-bar-v2-choice-qrcode",
+		};
+		if (pillMap[mode]) {
+			document.querySelector(pillMap[mode]).classList.add("active");
+		}
+
+		this.currentMode = mode;
+
+		switch (mode) {
+			case "download":
+				new Download(this.data, this.reload, this).render();
+				break;
+			case "convert":
+				new Convert(this.data, this.reload, this).render();
+				break;
+			case "qrcode":
+				new QRCode(this.data, this.reload, this).render();
+				break;
+		}
+
+		this.setStep(1);
+	}
+
+	close() {
+		this.currentMode = "none";
+		document.querySelectorAll(".nav-pill").forEach(el => el.classList.remove("active"));
+		this.setStep(0);
+		setTimeout(() => {
+			this.panel.innerHTML = "";
+		}, 350);
+	}
+
+	setStep(step) {
+		this.panel.dataset.step = step;
+	}
 }
+
+// ─── Download ─────────────────────────────────────────
 
 class Download {
+	constructor(data, reload, menu) {
+		this.data = data;
+		this.reload = reload;
+		this.menu = menu;
+	}
 
+	render() {
+		this.menu.panel.innerHTML = `
+            <menu id="action-bar-v2-options-dl-holder">
+                <div id="action-bar-v2-options-input-url-holder" class="action-bar-v2-options-step">
+                    <h3>Media URL :</h3>
+                    <input type="text" id="action-bar-v2-options-input-url" class="action-bar-v2-options-input-url" placeholder="https://...">
+                    <p id="action-bar-v2-options-dl-btn-next-holder">
+                        <button id="action-bar-v2-options-url-start-fetch-format">Next</button>
+                    </p>
+                </div>
+				<hr>
+                <div id="action-bar-v2-options-select-and-btn" class="action-bar-v2-options-step">
+                    <select id="action-bar-v2-options-select-format-dl">
+                        <option value="none" selected disabled>Dynamic fetch</option>
+                    </select>
+                    <div id="action-bar-v2-options-btn-download-holder">
+                        <button id="action-bar-v2-options-btn-download">Download</button>
+                    </div>
+                </div>
+            </menu>
+        `;
+
+		this._bindEvents();
+	}
+
+	_bindEvents() {
+		const urlInput = document.querySelector("#action-bar-v2-options-input-url");
+		const fetchBtn = document.querySelector("#action-bar-v2-options-url-start-fetch-format");
+		const formatSelect = document.querySelector("#action-bar-v2-options-select-format-dl");
+		const nextHolder = document.querySelector("#action-bar-v2-options-dl-btn-next-holder");
+
+		fetchBtn.addEventListener("click", async () => {
+			if (urlInput.value.trim() === "") {
+				return;
+			}
+
+			this._setHolder(nextHolder, "loading");
+
+			const result = await HTTPRequest.get(`/api/v1/download/${encodeURIComponent(clearUrl(urlInput.value))}`);
+
+			if (result.status !== 200) {
+				nextHolder.innerHTML = `${SVGS.cross}<br><center><button id="action-bar-v2-options-select-format-dl-retry">Retry</button></center><br>Error : ${result.data}`;
+				document.querySelector("#action-bar-v2-options-select-format-dl-retry")
+					.addEventListener("click", () => this.render());
+				return;
+			}
+
+			// Populate format select
+			const seen = new Set();
+			let dom = "";
+			for (const fmt of result.data.formats) {
+				if (!seen.has(fmt.ext)) {
+					seen.add(fmt.ext);
+					const selected = (fmt.ext === "mp3" || fmt.ext === "mp4") ? "selected" : "";
+					dom += `<option value="${fmt.ext}" ${selected}>${fmt.ext}</option>`;
+				}
+			}
+			formatSelect.innerHTML = dom;
+
+			this._setHolder(nextHolder, "valid");
+			this.menu.setStep(2);
+
+			// Bind download button
+			const dlHolder = document.querySelector("#action-bar-v2-options-btn-download-holder");
+			const dlBtn = document.querySelector("#action-bar-v2-options-btn-download");
+
+			dlBtn.addEventListener("click", async () => {
+				this._setHolder(dlHolder, "loading");
+
+				this.data.triggerGrace();
+				await this.reload.all();
+				this.reload.startAuto();
+
+				const audioOnly = formatSelect.value !== "mp4";
+				const dlResult = await HTTPRequest.post('/api/v1/download', {
+					url: clearUrl(urlInput.value),
+					format: formatSelect.value,
+					quality: "best",
+					audio_only: audioOnly,
+				});
+
+				if (dlResult.status !== 201) {
+					this._setHolder(dlHolder, "error");
+					return;
+				}
+
+				this._setHolder(dlHolder, "valid");
+				setTimeout(() => this.menu.close(), 2000);
+			});
+		});
+	}
+
+	_setHolder(el, state) {
+		switch (state) {
+			case "loading": el.innerHTML = '<span class="loader"></span>'; break;
+			case "valid": el.innerHTML = SVGS.check; break;
+			case "error": el.innerHTML = SVGS.cross; break;
+		}
+	}
 }
+
+// ─── Convert ──────────────────────────────────────────
 
 class Convert {
+	constructor(data, reload, menu) {
+		this.data = data;
+		this.reload = reload;
+		this.menu = menu;
+		this.convertActionMode = "srv";
+		this.fileName = "none";
+		this.newFormat = "none";
+		this.formatList = [".webp", ".mp3", ".mp4", ".png", ".jpg", ".ogg", ".aiff", ".mov", ".wav", ".flac", ".gif"];
+	}
 
+	render() {
+		this.menu.panel.innerHTML = `
+            <menu id="action-bar-v2-options-convert-holder">
+                <div id="action-bar-v2-options-convert-step-1">
+                    <select id="action-bar-v2-options-convert-input-select-options">
+                        <option value="dl">Download file</option>
+                        <option value="upl">Upload file</option>
+                        <option value="srv" selected>From server</option>
+                    </select>
+                    <div id="action-bar-v2-options-convert-input-options-holder">
+                        <select id="action-bar-v2-options-convert-file-select">
+                            <option value="none" selected disabled>None</option>
+                        </select>
+                    </div>
+                    <div id="action-bar-v2-options-next-btn-holder">
+                        <button id="action-bar-v2-options-next-btn">Next</button>
+                    </div>
+                </div>
+				<hr>
+                <div id="action-bar-v2-options-convert-step-2">
+                    <select id="action-bar-v2-options-convert-select-convert-format">
+                        <option value="none" selected disabled>None</option>
+                    </select>
+                    <div id="action-bar-v2-options-convert-button-start-convert-holder">
+                        <button id="action-bar-v2-options-convert-button-start-convert">Convert</button>
+                    </div>
+                </div>
+            </menu>
+        `;
+
+		this._bindEvents();
+	}
+
+	async _bindEvents() {
+		const optionsSelect = document.querySelector("#action-bar-v2-options-convert-input-select-options");
+		const nextBtnHolder = document.querySelector("#action-bar-v2-options-next-btn-holder");
+		const convertFormatSelect = document.querySelector("#action-bar-v2-options-convert-select-convert-format");
+		const startConvertBtnHolder = document.querySelector("#action-bar-v2-options-convert-button-start-convert-holder");
+
+		// Populate convert format select
+		this._populateFormatSelect(convertFormatSelect);
+
+		// Setup initial mode
+		await this._setupActionMode(this.convertActionMode);
+
+		// Listen for mode change
+		optionsSelect.addEventListener("change", async () => {
+			await this._setupActionMode(optionsSelect.value);
+		});
+
+		// Start convert button
+		document.querySelector("#action-bar-v2-options-convert-button-start-convert")
+			.addEventListener("click", async () => {
+				this._setHolder(startConvertBtnHolder, "loading");
+
+				const cleaned = convertFormatSelect.value.split(".");
+				this.newFormat = cleaned[cleaned.length - 1];
+
+				// Store last used format
+				localStorage.setItem("last_convert_format", convertFormatSelect.value);
+
+				const result = await HTTPRequest.post('/api/v1/convert', {
+					file_name: this.fileName,
+					new_format: this.newFormat,
+				});
+
+				if (result.status !== 200) {
+					this._setHolder(startConvertBtnHolder, "error");
+					return;
+				}
+
+				const delResult = await HTTPRequest.delete(`/api/v1/files/${encodeURIComponent(this.fileName)}`);
+				if (delResult.status !== 200) {
+					this._setHolder(startConvertBtnHolder, "error");
+					return;
+				}
+
+				this._setHolder(startConvertBtnHolder, "valid");
+				await this.reload.all();
+				this.menu.close();
+			});
+	}
+
+	_populateFormatSelect(selectEl) {
+		const lastSelected = localStorage.getItem("last_convert_format");
+		let dom = "";
+		for (const fmt of this.formatList) {
+			const selected = lastSelected === fmt ? "selected" : "";
+			dom += `<option value="${fmt}" ${selected}>${fmt}</option>`;
+		}
+		selectEl.innerHTML = dom;
+	}
+
+	async _setupActionMode(mode) {
+		const optionsHolder = document.querySelector("#action-bar-v2-options-convert-input-options-holder");
+		const nextBtnHolder = document.querySelector("#action-bar-v2-options-next-btn-holder");
+
+		this._setHolder(nextBtnHolder, "loading");
+		this.menu.setStep(1);
+		this.convertActionMode = mode;
+
+		switch (mode) {
+			case "dl":
+				optionsHolder.innerHTML = `<input id="action-bar-v2-options-convert-url-input" class="action-bar-v2-options-input-url" placeholder="https://..." type="text">`;
+				break;
+			case "upl":
+				optionsHolder.innerHTML = `<input id="action-bar-v2-options-convert-file-input" type="file">`;
+				break;
+			case "srv":
+				optionsHolder.innerHTML = `<select id="action-bar-v2-options-convert-file-select"><option selected disabled>None</option></select>`;
+				await this._populateFilelistSelect();
+				break;
+			default:
+				return;
+		}
+
+		nextBtnHolder.innerHTML = `<button id="action-bar-v2-options-next-btn">Next</button>`;
+		document.querySelector("#action-bar-v2-options-next-btn")
+			.addEventListener("click", async () => {
+				await this._nextButtonAction();
+			});
+	}
+
+	async _nextButtonAction() {
+		const nextBtnHolder = document.querySelector("#action-bar-v2-options-next-btn-holder");
+
+		switch (this.convertActionMode) {
+			case "dl": {
+				const urlInput = document.querySelector("#action-bar-v2-options-convert-url-input");
+				if (!urlInput.value) return;
+
+				this._setHolder(nextBtnHolder, "loading");
+
+				const formatsData = await HTTPRequest.get(`/api/v1/download/${encodeURIComponent(clearUrl(urlInput.value))}`);
+				if (formatsData.status !== 200) {
+					this._setHolder(nextBtnHolder, "error");
+					return;
+				}
+
+				let dlFormat = "none";
+				for (const fmt of formatsData.data.formats) {
+					if (fmt.ext === "mp3" || fmt.ext === "mp4") {
+						dlFormat = fmt.ext;
+						break;
+					}
+				}
+				if (dlFormat === "none") {
+					this._setHolder(nextBtnHolder, "error");
+					return;
+				}
+
+				this.data.triggerGrace();
+				await this.reload.all();
+				this.reload.startAuto();
+
+				const audioOnly = dlFormat !== "mp4";
+				const downloaded = await HTTPRequest.post('/api/v1/download', {
+					url: clearUrl(urlInput.value),
+					format: dlFormat,
+					quality: "best",
+					audio_only: audioOnly,
+				});
+
+				if (downloaded.status !== 201) {
+					this._setHolder(nextBtnHolder, "error");
+					return;
+				}
+
+				await this.reload.all();
+				const mediaId = formatsData.data.mediaId;
+				for (const file of this.data.filesList) {
+					if (file.name.includes(`[${mediaId}]`)) {
+						this.fileName = file.name;
+					}
+				}
+
+				if (this.fileName === "none") {
+					this._setHolder(nextBtnHolder, "error");
+					return;
+				}
+
+				this._setHolder(nextBtnHolder, "valid");
+				break;
+			}
+
+			case "upl": {
+				const fileInput = document.querySelector("#action-bar-v2-options-convert-file-input");
+				if (fileInput.files.length === 0) {
+					this._setHolder(nextBtnHolder, "error");
+					return;
+				}
+
+				this._setHolder(nextBtnHolder, "loading");
+
+				for (const file of fileInput.files) {
+					const formData = new FormData();
+					formData.append('file', file);
+					const uploadResult = await HTTPRequest.postFile('/api/v1/files', formData);
+					if (uploadResult.status !== 201) {
+						this._setHolder(nextBtnHolder, "error");
+						return;
+					}
+					this.fileName = file.name;
+					await this.reload.all();
+				}
+
+				this._setHolder(nextBtnHolder, "valid");
+				break;
+			}
+
+			case "srv": {
+				const selectFile = document.querySelector("#action-bar-v2-options-convert-file-select");
+				if (selectFile.value === "none") return;
+
+				this._setHolder(nextBtnHolder, "loading");
+				this.fileName = selectFile.value;
+				this._setHolder(nextBtnHolder, "valid");
+				break;
+			}
+
+			default:
+				this._setHolder(nextBtnHolder, "error");
+				return;
+		}
+
+		this.menu.setStep(2);
+	}
+
+	async _populateFilelistSelect() {
+		const selectEl = document.querySelector("#action-bar-v2-options-convert-file-select");
+		await this.data.fetchFiles();
+		let dom = "";
+		for (const file of this.data.filesList) {
+			dom += `<option value="${file.name}">${file.name}</option>`;
+		}
+		selectEl.innerHTML = dom;
+	}
+
+	_setHolder(el, state) {
+		switch (state) {
+			case "loading": el.innerHTML = '<span class="loader"></span>'; break;
+			case "valid": el.innerHTML = SVGS.check; break;
+			case "error": el.innerHTML = SVGS.cross; break;
+		}
+	}
 }
 
+// ─── QRCode ───────────────────────────────────────────
 class QRCode {
+	constructor(data, reload, menu) {
+		this.data = data;
+		this.reload = reload;
+		this.menu = menu;
+		this.currentUrl = "";
+	}
 
+	render() {
+		this.menu.panel.innerHTML = `
+            <menu id="action-bar-v2-options-qrcode-holder">
+                <div id="action-bar-v2-options-qrcode-step-1">
+                    <h3>Media URL :</h3>
+                    <input type="text" id="action-bar-v2-options-qrcode-input-url" class="action-bar-v2-options-input-url" placeholder="https://...">
+                    <div id="action-bar-v2-options-qrcode-button-start-holder">
+                        <button id="action-bar-v2-options-qrcode-button-start">Generate</button>
+                    </div>
+                </div>
+                <hr>
+                <div id="action-bar-v2-options-qrcode-step-2">
+                    <div id="action-bar-v2-options-qrcode-img-holder"></div>
+                    <div id="action-bar-v2-options-qrcode-button-save-holder">
+                        <button id="action-bar-v2-options-qrcode-button-save">Save on server</button>
+                    </div>
+                </div>
+            </menu>
+        `;
+		this._bindEvents();
+	}
+
+	_bindEvents() {
+		const urlInput = document.querySelector("#action-bar-v2-options-qrcode-input-url");
+		const btnHolder = document.querySelector("#action-bar-v2-options-qrcode-button-start-holder");
+		const imgHolder = document.querySelector("#action-bar-v2-options-qrcode-img-holder");
+
+		document.querySelector("#action-bar-v2-options-qrcode-button-start")
+			.addEventListener("click", async () => {
+				if (!urlInput.value.trim()) return;
+
+				this._setHolder(btnHolder, "loading");
+
+				const cleanedUrl = clearUrl(urlInput.value);
+				const apiUrl = '/api/v1/qrcode/' + encodeURIComponent(cleanedUrl);
+				const result = await HTTPRequest.getImage(apiUrl);
+
+				if (result.status !== 200) {
+					this._setHolder(btnHolder, "error");
+					return;
+				}
+
+				this.currentUrl = cleanedUrl;
+				imgHolder.innerHTML = `<img src="${apiUrl}" id="action-bar-v2-options-qrcode-img-display">`;
+				this._setHolder(btnHolder, "valid");
+				this.menu.setStep(3);
+			});
+
+		document.querySelector("#action-bar-v2-options-qrcode-button-save")
+			.addEventListener("click", async () => {
+				const saveHolder = document.querySelector("#action-bar-v2-options-qrcode-button-save-holder");
+
+				if (!this.currentUrl) {
+					this._setHolder(saveHolder, "error");
+					return;
+				}
+
+				this._setHolder(saveHolder, "loading");
+
+				const result = await HTTPRequest.post('/api/v1/qrcode', {
+					url: this.currentUrl,
+				});
+
+				if (result.status !== 201) {
+					this._setHolder(saveHolder, "error");
+					return;
+				}
+
+				this._setHolder(saveHolder, "valid");
+				await this.reload.all();
+			});
+	}
+
+	_setHolder(el, state) {
+		switch (state) {
+			case "loading": el.innerHTML = '<span class="loader"></span>'; break;
+			case "valid": el.innerHTML = SVGS.check; break;
+			case "error": el.innerHTML = SVGS.cross; break;
+		}
+	}
 }
+
+// ─── IIFE ─────────────────────────────────────────────
+
+(async () => {
+	const data = new GlobalData();
+	const reload = new Reload(data);
+	const menu = new ActionMenu(data, reload);
+
+	await reload.all();
+})();
