@@ -1,5 +1,5 @@
 const SSHCommand = require("./SSHCommand");
-const { parseYtDlpFormatQuery } = require("../utils")
+
 class Download {
 	constructor(url, format = "none", quality = "best", audio_only = false) {
 		this.url = url || "none";
@@ -21,29 +21,18 @@ class Download {
 			"-f", format,
 			"-t", codec,
 			"--embed-metadata",
-			"--cookies-from-browser", "firefox"
+			//"--cookies-from-browser", "firefox"
 		];
 		const dl = new SSHCommand("../yt-dlp-master/yt-dlp.sh", args);
 		const result = await dl.execute();
 		return { code: 201, data: result.data };
 	}
-	async getFormat() {
-		const args = [this.url, "--list-formats"];
-		const dl = new SSHCommand("../yt-dlp-master/yt-dlp.sh", args);
-		const result = await dl.execute();
-		if (result.code !== 200) {
-			return result
-		} else {
-			const to_send = parseYtDlpFormatQuery(result.data.stdout);
-			return { code: (to_send?.formats?.length > 0 ? 200 : 500), data: to_send };
-		}
-	}
-	async isPlaylist() {
-		const args = ["--flat-playlist", "--dump-json", this.url];
+
+	async getData() {
+		const args = ["--flat-playlist", "--dump-single-json", this.url];
 		const cmd = new SSHCommand("../yt-dlp-master/yt-dlp.sh", args);
 		const result = await cmd.execute();
-		console.log(result)
-		return result;
+		return { code: result.code, data: JSON.parse(result.data.stdout.split('\n')[0])};
 	}
 }
 module.exports = Download;

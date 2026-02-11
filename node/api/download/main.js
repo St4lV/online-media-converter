@@ -10,11 +10,12 @@ router.post("/", async (req, res)=>{
     res.status(result.code).json({data:result.data});
 })
 
-router.get("/:url", async(req, res)=>{
-    const { url } = req.params;
-    const download = new Download(url);
-    const result = await download.getFormat();
-    res.status(result.code).json({data:result.data});
+router.get("/:url", async(req, res)=> {
+	const { url  }= req.params;
+	const link = new Download(url);
+	const result = await link.getData();
+	res.status(result.code).json({ data: result.data });
+
 })
 
 module.exports = router;
