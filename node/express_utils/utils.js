@@ -60,4 +60,4 @@ function dim (text) {
   return supportsAnsi() ? `\x1b[2m${text}\x1b[0m` : text
 }
 
-module.exports = { URLize, log, app_updating, cronTasks, dim, parseYtDlpFormatQuery };
+module.exports = { URLize, log, app_updating, cronTasks, dim};
