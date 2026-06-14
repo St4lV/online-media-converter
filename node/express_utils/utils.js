@@ -55,12 +55,17 @@ async function cronCommand(schedule = "0 4 * * *", callback) {
 }
 
 // Text formatting code coming from dotenv lib
-
+//=============================================
 function supportsAnsi () {
-  return process.stdout.isTTY // && process.env.TERM !== 'dumb'
+	return process.stdout.isTTY
 }
 function dim (text) {
-  return supportsAnsi() ? `\x1b[2m${text}\x1b[0m` : text
+	return supportsAnsi() ? `\x1b[2m${text}\x1b[0m` : text
+}
+//=============================================
+
+function red(text) {
+	return supportsAnsi() ? `\x1b[31m${text}\x1b[0m` : text
 }
 
 module.exports = { URLize, log, app_updating, cronTasks, dim};
