@@ -7,4 +7,8 @@ const express_values = {
     public_route : process.env.EXPRESS_PUBLIC_ROUTE
 }
 
-module.exports = { express_values }
+const runtime = {
+	environment: process.env.RUNTIME_ENV
+}
+
+module.exports = { express_values, runtime }

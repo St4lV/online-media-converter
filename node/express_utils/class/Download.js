@@ -1,4 +1,7 @@
 const SSHCommand = require("./SSHCommand");
+const { runtime } = require("../env-values-dictionnary");
+const os = require('os');
+const path = require('path');
 
 class Download {
 	constructor(url, format = "none", quality = "best", audio_only = false) {
@@ -6,6 +9,8 @@ class Download {
 		this.format = format || "none";
 		this.quality = quality || "best";
 		this.audio_only = audio_only || false;
+		
+		this._yt_dlp_exec_path = runtime.environment === "DEV" ? path.join(os.homedir(), '.local', 'bin', 'yt-dlp') : "/usr/local/bin/yt-dlp"
 	}
 	async start() {
 		const format = this.format === "mp4" ? "b[ext=mp4]" : this.format;
@@ -17,20 +22,21 @@ class Download {
 			"-P", "../node/downloaded",
 			this.url,
 			"--js-runtimes", "node",
-			"--remote-components", "ejs:github",
 			"-f", format,
 			"-t", codec,
 			"--embed-metadata",
-			//"--cookies-from-browser", "firefox"
 		];
-		const dl = new SSHCommand("../yt-dlp-master/yt-dlp.sh", args);
+		if (runtime.environment === "DEV"){
+			args.push("--cookies-from-browser", "firefox");
+		}
+		const dl = new SSHCommand(this._yt_dlp_exec_path, args);
 		const result = await dl.execute();
 		return { code: 201, data: result.data };
 	}
 
 	async getData() {
-		const args = ["--flat-playlist", "--dump-single-json", this.url];
-		const cmd = new SSHCommand("../yt-dlp-master/yt-dlp.sh", args);
+		const args = ["--flat-playlist", "--dump-single-json", "--js-runtimes", "node", this.url];
+		const cmd = new SSHCommand(this._yt_dlp_exec_path, args);
 		const result = await cmd.execute();
 		return { code: result.code, data: JSON.parse(result.data.stdout.split('\n')[0])};
 	}

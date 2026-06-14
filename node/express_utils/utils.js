@@ -5,11 +5,14 @@ function URLize(input){
 const pjson = require('../package.json');
 const log = {
     data(data){
-      console.log(`[${pjson.name}@${pjson.version}] `+data)
-    },
-    error(data){
-      console.error(`[${pjson.name}@${pjson.version}] `+data)
-    }
+		console.log(`[${pjson.name}@${pjson.version}] `+ data);
+	},
+	debug(data) {
+		console.log(dim(`[${pjson.name}@${pjson.version}] ` + data));
+	},
+	error(data){
+	console.error(red(`[${pjson.name}@${pjson.version}] `+ data));
+	}
 }
 
 const cron = require('node-cron');
@@ -23,8 +26,8 @@ async function cronTasks(){
 	
 	await cronCommand("0 4 * * *",async ()=>{
 		log("Starting yt-dlp update..")
-		const cmd  = "cd .. && apt update && apt upgrade -y && rm -rf yt-dlp-master && curl -L -o ytdlp.zip https://github.com/yt-dlp/yt-dlp/archive/refs/heads/master.zip && unzip ytdlp.zip && rm ytdlp.zip";
-		const ssh = new SSHCommand(cmd);
+		const cmd  = "-U";
+		const ssh = new SSHCommand("/usr/local/bin/yt-dlp",cmd);
 		await ssh.execute();
 		log("Done.")
 	})

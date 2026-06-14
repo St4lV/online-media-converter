@@ -1,7 +1,7 @@
 const express = require('express');
 const fileUpload = require("express-fileupload");
 
-const { express_values } = require("./express_utils/env-values-dictionnary");
+const { express_values, runtime } = require("./express_utils/env-values-dictionnary");
 const { log, cronTasks, dim } = require("./express_utils/utils")
 
 const app = express();
@@ -48,7 +48,8 @@ app.listen(port, async () => {
 });
 
 async function appSetup() {
-    log.data("Setting up cron jobs..");
+    log.debug("Setting up cron jobs..");
     cronTasks();
-    log.data("Cron tasks updated.")
+    log.debug("Cron tasks updated.");
+	log.debug(`Environment is ${runtime.environment}`);
 }
