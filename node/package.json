@@ -1,6 +1,6 @@
 {
   "name": "online-media-converter",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "",
   "main": "server.js",
   "scripts": {

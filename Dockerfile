@@ -1,4 +1,4 @@
-FROM node:trixie-slim
+FROM node:26-bookworm-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 
